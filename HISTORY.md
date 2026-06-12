@@ -1,0 +1,706 @@
+# HISTORY.md
+
+BLC Care 개발 이력을 기록하는 문서입니다.
+
+이 문서는 세션이 바뀌어도 프로젝트 맥락을 유지하기 위해 사용합니다.
+
+민감정보는 기록하지 않습니다.
+
+---
+
+## 기록 규칙
+
+각 작업 후 아래 형식으로 기록합니다.
+
+```md
+## YYYY-MM-DD - 작업 제목
+
+### Summary
+- 무엇을 작업했는지 요약
+
+### Changed Files
+- 변경된 파일 목록
+
+### Reason
+- 왜 이 작업을 했는지
+
+### Checks
+- 실행한 테스트 또는 확인 사항
+
+### TODO
+- 남은 작업
+```
+
+---
+
+## 2026-06-12 - Initial project documentation
+
+### Summary
+
+* BLC Care 프로젝트 문서 구조를 정리했다.
+* 요구사항, DB Schema, 화면 흐름, API 명세, 권한 규칙, 기도제목 파서 규칙, 개인정보 처리 원칙, 개발 계획 문서를 작성했다.
+* Codex Agent 작업 지침을 위한 `AGENTS.md` 방향을 정리했다.
+
+### Changed Files
+
+* `AGENTS.md`
+* `README.md`
+* `docs/01_REQUIREMENTS.md`
+* `docs/02_DB_SCHEMA.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/04_API_SPEC.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/06_PRAYER_PARSER_RULES.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+
+### Reason
+
+* Codex Agent가 요구사항과 설계 의도를 잃지 않고 단계적으로 개발할 수 있도록 하기 위함.
+* 개인정보와 기도제목을 다루는 앱이므로 권한, 문서, 이력 관리 기준을 먼저 확정하기 위함.
+
+### Checks
+
+* 문서 간 주요 구조 정합성 확인
+
+  * 복수 role 지원
+  * `admin,cell_leader` 겸임 지원
+  * `user_cell_assignments` 기반 셀 배정
+  * 규칙 기반 기도제목 파서
+  * mock data 우선 개발 원칙
+
+### TODO
+
+* Phase 1 mock UI 구현
+* TypeScript 타입 정의
+* 권한 helper 구현
+* 기도제목 parser 로컬 함수 구현
+* mock API client 구현
+
+---
+
+## 2026-06-12 - Phase 1 mock UI 기본 구조 구현
+
+### Summary
+
+* Next.js App Router, TypeScript, Tailwind CSS 기반 앱을 구성했다.
+* mock 사용자 역할 전환, mock data, mock API adapter와 주요 Phase 1 화면을 구현했다.
+* 선택된 셀 인원만 대상으로 하는 규칙 기반 prayer parser와 저장 전 확인 UI를 구현했다.
+* 데스크톱 사이드바와 모바일 하단 내비게이션을 적용했다.
+* 기존 `doc/` 및 오타 파일명을 문서 기준의 `docs/` 표준 경로로 정리했다.
+
+### Changed Files
+
+* `app/`
+* `components/`
+* `lib/`
+* `package.json`
+* `README.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `HISTORY.md`
+* `doc/` → `docs/`
+
+### Reason
+
+* 실제 API 및 실제 개인정보 없이 Phase 1 화면 흐름과 로컬 parser를 검증하기 위함.
+* 코드와 문서 참조 경로를 일치시키기 위함.
+
+### Checks
+
+* `npm run test` - prayer parser 4개 테스트 통과
+* `npm run typecheck` - 통과
+* `npm run lint` - 통과
+* `npm run build` - 통과
+* `npm run dev` - `/`, `/reports/new` HTTP 200 확인
+* `npm audit --omit=dev --audit-level=moderate` - Next.js 내부 PostCSS 관련 moderate 2건 확인. 자동 수정이 파괴적 다운그레이드를 제안해 적용하지 않음.
+
+### TODO
+
+* `/reports/[id]`, `/newcomer`, `/admin/dashboard` 등 남은 Phase 1 화면 구현
+* mock route guard 및 권한 없음 상태 보강
+* 폼 검증과 UI 상호작용 테스트 추가
+* Phase 2 도메인 로직 확장
+* Next.js 의존성 업데이트 시 PostCSS 보안 권고 재확인
+
+---
+
+## 2026-06-12 - 나눔 일괄 분리 기능 추가
+
+### Summary
+
+* 기도제목 전용 이름 매칭 로직을 재사용 가능한 사람별 내용 parser로 분리했다.
+* `/reports/new`에 나눔 일괄 입력, 자동 분리, 확인 후 개인별 나눔 입력 반영 흐름을 추가했다.
+* 나눔과 기도제목이 각각 독립적인 입력 및 확인 상태를 유지하도록 구성했다.
+
+### Changed Files
+
+* `components/member-content-bulk-input.tsx`
+* `components/report-form.tsx`
+* `lib/member-content-parser.ts`
+* `lib/prayer-parser.ts`
+* `lib/types.ts`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/06_PRAYER_PARSER_RULES.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `README.md`
+
+### Reason
+
+* 셀리더가 기도제목뿐 아니라 여러 사람의 나눔도 한 번에 붙여넣고 개인별로 분리할 수 있도록 하기 위함.
+
+### Checks
+
+* `npm run test` - 기존 기도제목 4건 및 나눔 분리 1건 통과
+* `npm run typecheck` - 통과
+* `npm run lint` - 통과
+* `npm run build` - 통과
+* `npm run dev` - `/reports/new` 응답 확인
+
+### TODO
+
+* 동명이인과 미매칭 항목을 UI에서 직접 선택해 반영하는 기능
+
+---
+
+## 2026-06-12 - Phase 1 2순위 화면 구현
+
+### Summary
+
+* 비로그인 새신자 등록 및 완료 화면을 구현했다.
+* React Hook Form과 Zod로 필수값 및 개인정보 수집 동의를 검증했다.
+* Admin 대시보드, 새신자 관리, 장기결석자 관리 화면을 구현했다.
+* Admin 전용 mock 접근 가드와 역할 기반 메뉴를 추가했다.
+* 새신자 상태 변경·성도 전환 및 장기결석 확인·해결 mock 동작을 추가했다.
+
+### Changed Files
+
+* `app/newcomer/`
+* `app/(protected)/admin/`
+* `components/admin-guard.tsx`
+* `components/newcomer-form.tsx`
+* `components/app-shell.tsx`
+* `components/status-badge.tsx`
+* `lib/types.ts`
+* `lib/mock-data.ts`
+* `lib/api.ts`
+* `package.json`
+* `README.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+
+### Reason
+
+* Phase 1 2순위 화면 흐름을 실제 API와 실제 개인정보 없이 검증하기 위함.
+
+### Checks
+
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - parser 및 새신자 폼 검증 테스트 통과
+* `npm run build` - 통과
+* `npm run dev` - 신규 공개 및 Admin 라우트 응답 확인
+
+### TODO
+
+* `/reports/[id]` 상세 화면
+* Phase 1 3순위 Admin 화면
+* 실제 비로그인 세션 기반 보호 route guard
+* mock UI 상호작용 테스트 보강
+
+---
+
+## 2026-06-12 - Phase 1 1순위 및 3순위 화면 구현
+
+### Summary
+
+* `/reports/[id]` 상세 조회와 권한별 mock 수정 화면을 구현했다.
+* Admin 셀·사용자·설정·백업 관리 화면을 구현했다.
+* 셀 생성·수정, 사용자 등록·역할·배정·해제, 설정 저장, 백업 생성 mock 동작을 추가했다.
+* 리포트 수정 권한 helper 테스트를 추가했다.
+
+### Changed Files
+
+* `app/(protected)/reports/[id]/page.tsx`
+* `app/(protected)/admin/cells/page.tsx`
+* `app/(protected)/admin/users/page.tsx`
+* `app/(protected)/admin/settings/page.tsx`
+* `app/(protected)/admin/backup/page.tsx`
+* `components/app-shell.tsx`
+* `lib/types.ts`
+* `lib/mock-data.ts`
+* `lib/api.ts`
+* `lib/permissions.ts`
+* `lib/permissions.test.ts`
+* `docs/04_API_SPEC.md`
+* `docs/06_PRAYER_PARSER_RULES.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `README.md`
+
+### Reason
+
+* Phase 1의 남은 1순위 및 3순위 화면 흐름을 실제 외부 API 없이 검증하기 위함.
+
+### Checks
+
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 10개 테스트 통과
+* `npm run build` - 전체 18개 라우트 생성 완료
+* `npm run dev` - 리포트 상세 및 3순위 Admin 라우트 응답 확인
+
+### TODO
+
+* 실제 비로그인 세션 기반 보호 route guard
+* 동명이인·미매칭 일괄 입력 항목 직접 선택
+* UI 상호작용 테스트 보강
+
+---
+
+## 2026-06-12 - Phase 2 타입 및 도메인 로직 구현
+
+### Summary
+
+* DB Schema 기준으로 12개 Sheet 엔티티 타입과 화면 파생 타입을 정리했다.
+* roles와 name_aliases의 DB 쉼표 문자열 변환 helper를 추가했다.
+* 권한 helper를 배정 목록과 기준일을 받는 순수 함수로 정리했다.
+* 날짜, 주차 계산, 장기결석자 계산, 리포트 수정 가능 여부 helper를 구현했다.
+* 기도제목 parser의 구분자, 정규화, invalid 안내 및 테스트를 보강했다.
+* mock data를 새 필수 타입과 날짜·관계 필드에 맞게 정리했다.
+
+### Changed Files
+
+* `lib/types.ts`
+* `lib/date.ts`
+* `lib/absence.ts`
+* `lib/permissions.ts`
+* `lib/member-content-parser.ts`
+* `lib/prayer-parser.ts`
+* `lib/mock-data.ts`
+* `lib/api.ts`
+* `lib/*.test.ts`
+* Phase 1 UI 선택 필드 표시 처리
+* `docs/01_REQUIREMENTS.md`
+* `docs/02_DB_SCHEMA.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/06_PRAYER_PARSER_RULES.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+
+### Reason
+
+* Phase 3 API 구현 전에 DB 타입과 핵심 비즈니스 규칙을 테스트 가능한 형태로 확정하기 위함.
+
+### Checks
+
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 30개 테스트 통과
+* `npm run build` - 전체 18개 라우트 생성 완료
+* `npm run dev` - 홈, 성도 상세, 리포트 작성·상세, Admin 화면 HTTP 200 확인
+
+### TODO
+
+* Phase 3 Google Apps Script API 구현
+* API payload 변환 타입 및 테스트
+* 서버/API 계층에서 권한 helper 재검증 적용
+
+---
+
+## 2026-06-12 - Phase 3-1 Apps Script 기본 구조 및 Auth API
+
+### Summary
+
+* Google Apps Script Web App의 `doGet` / `doPost` action 라우터와 공통 응답·에러 처리를 구현했다.
+* Script Properties의 `SHEET_ID`로 Spreadsheet를 열고 Sheet를 헤더 기반 객체로 읽는 helper를 구현했다.
+* 이메일 기준 활성 사용자 확인, roles 배열 변환, 현재 담당 셀 조합을 수행하는 `verifyUser` API를 구현했다.
+* Phase 3-1 API 계약과 Apps Script 설정 방법을 문서화했다.
+
+### Changed Files
+
+* `gas-backend/Code.gs`
+* `gas-backend/Router.gs`
+* `gas-backend/Response.gs`
+* `gas-backend/Errors.gs`
+* `gas-backend/Config.gs`
+* `gas-backend/Sheets.gs`
+* `gas-backend/Auth.gs`
+* `gas-backend/Utils.gs`
+* `docs/04_API_SPEC.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `README.md`
+* `HISTORY.md`
+
+### Reason
+
+* 실제 Google Apps Script 데이터 API 구현 전에 공통 백엔드 구조와 사용자 검증 계약을 확정하기 위함.
+
+### Checks
+
+* Apps Script `.gs` 파일 JavaScript 구문 검사
+* 로컬 Apps Script stub으로 겸임 역할, 담당 셀, 미등록·비활성 계정, 라우터 응답 확인
+* `npm run lint`
+* `npm run typecheck`
+* `npm run test` - 30개 테스트 통과
+* `npm run build` - 전체 18개 라우트 생성 완료
+
+### TODO
+
+* 실제 Apps Script 프로젝트에서 테스트용 Sheet와 `SHEET_ID`를 설정해 Web App 호출 확인
+* Google OAuth 신원 검증
+* Phase 3 후속 Users / Cells / Members / Reports API
+* 프론트엔드 실제 API 연결
+
+---
+
+## 2026-06-12 - Phase 3-2 Members 및 Prayer Parser API
+
+### Summary
+
+* Admin 전체 범위와 셀리더 활성 배정 셀 범위를 서버에서 검증하는 성도 접근 helper를 구현했다.
+* 필터, 이름 검색, 정렬, 페이지네이션과 셀 이름·마지막 출석일·미해결 특이사항 수를 제공하는 `getMembers`를 구현했다.
+* 성도 기본 정보와 개인별 주차 기록·특이사항을 반환하는 `getMemberDetail`을 구현했다.
+* 선택된 셀의 활동 성도만 대상으로 동작하며 결과를 저장하지 않는 규칙 기반 `parsePrayerRequests`를 구현했다.
+* Phase 3-2 API 계약과 Apps Script 설정 Sheet 목록을 문서화했다.
+
+### Changed Files
+
+* `gas-backend/Router.gs`
+* `gas-backend/Auth.gs`
+* `gas-backend/Sheets.gs`
+* `gas-backend/Utils.gs`
+* `gas-backend/Members.gs`
+* `gas-backend/PrayerParser.gs`
+* `docs/04_API_SPEC.md`
+* `docs/06_PRAYER_PARSER_RULES.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `README.md`
+* `HISTORY.md`
+
+### Reason
+
+* Members와 Prayer Parser를 실제 Google Sheets 기반 API로 구현하면서 민감 정보의 서버 측 접근 범위를 강제하기 위함.
+
+### Checks
+
+* Apps Script `.gs` 파일 JavaScript 구문 검사
+* 로컬 Apps Script stub 기반 Members 권한·필터·상세·parser 흐름 확인 - 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 30개 테스트 통과
+* `npm run build` - 전체 18개 라우트 생성 완료
+
+### TODO
+
+* 실제 Apps Script Web App에서 테스트용 Sheet 호출 확인
+* Google OAuth 신원 검증
+* Reports / Users / Cells / Newcomers API
+* 프론트엔드 실제 API 연결
+
+---
+
+## 2026-06-12 - Phase 3-3 Apps Script Web App 배포 가이드
+
+### Summary
+
+* 실제 ID와 URL을 저장하지 않고 Apps Script Web App을 mock 데이터로 배포하는 절차를 문서화했다.
+* `SHEET_ID` Script Property, 최소 mock Sheet 데이터, `/dev`와 `/exec` 배포 차이를 정리했다.
+* `verifyUser`, `getMembers`, `parsePrayerRequests`의 PowerShell `curl.exe` 호출과 확인 항목을 작성했다.
+* `ContentService` JSON 리다이렉트, `curl -L`, `TextOutput` CORS 제약과 Next.js 서버 proxy 원칙을 기록했다.
+
+### Changed Files
+
+* `docs/10_APPS_SCRIPT_DEPLOYMENT.md`
+* `docs/04_API_SPEC.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `README.md`
+* `HISTORY.md`
+
+### Reason
+
+* Phase 3 백엔드를 격리된 mock 환경에서 실제 Web App으로 배포하고 호출 가능 여부를 안전하게 확인할 수 있도록 하기 위함.
+
+### Checks
+
+* Apps Script Web App, ContentService, TextOutput 공식 문서 기준 배포·JSON·CORS 제약 확인
+* JSON MIME type 및 공통 응답 구조 로컬 stub 검사 - 통과
+* Apps Script 10개 파일 JavaScript 구문 검사 - 통과
+* 문서 내 실제 Sheet ID, 배포 URL, 실제 개인정보 미포함 확인
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 30개 테스트 통과
+
+### TODO
+
+* 격리된 mock Spreadsheet와 임시 Web App URL을 사용한 실제 `/exec` 호출
+* Next.js 서버 Route Handler 또는 proxy 구현
+* Google OAuth 신원 검증
+
+---
+
+## 2026-06-12 - Phase 3-4 주차별 셀 리포트 API
+
+### Summary
+
+* 리포트 목록·상세·주차 draft 조회와 저장 API를 구현했다.
+* `weekly_cell_reports`와 `weekly_member_records`를 안정 ID 및 복합 유니크 키 기준으로 생성·수정하도록 구현했다.
+* `LockService` 안에서 동일 셀·주차와 동일 리포트·성도 중복을 차단했다.
+* Admin 전체 접근과 잠금 리포트 수정, 셀리더 활성 배정 셀·해당 주차·잠금 제한을 서버에서 검증했다.
+* 새 리포트는 활성 셀에만 생성하고 기존 비활성 셀 리포트는 Admin이 수정할 수 있도록 처리했다.
+* 새 주차 기록은 새 리포트 아래 누적하고, 수정 요청에서 빠진 기존 개인 기록은 삭제하지 않도록 했다.
+
+### Changed Files
+
+* `gas-backend/Reports.gs`
+* `gas-backend/Router.gs`
+* `gas-backend/Sheets.gs`
+* `gas-backend/Auth.gs`
+* `gas-backend/Utils.gs`
+* `gas-backend/Errors.gs`
+* `docs/04_API_SPEC.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `docs/10_APPS_SCRIPT_DEPLOYMENT.md`
+* `README.md`
+* `HISTORY.md`
+
+### Reason
+
+* 주차별 셀 리포트와 개인별 기록을 권한·기간·잠금 규칙에 맞춰 Google Sheets에 누적하기 위함.
+
+### Checks
+
+* Apps Script Reports 통합 stub으로 목록 권한, draft 병합, 수정 기간, 잠금, upsert, 중복 방지, 기록 보존 확인 - 통과
+* 기존 비활성 셀 리포트 Admin 수정 및 새 리포트 활성 셀 제한 집중 stub - 통과
+* Apps Script 11개 파일 JavaScript 구문 검사 - 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 30개 테스트 통과
+* `npm run build` - 전체 18개 라우트 생성 완료
+
+### TODO
+
+* 격리된 mock Spreadsheet에서 Reports API 실제 저장 호출
+* 다중 Sheet 쓰기 중 실패 시 운영 복구 절차와 audit log
+* Next.js 서버 proxy 및 실제 프론트엔드 연결
+* Google OAuth 신원 검증
+
+---
+
+## 2026-06-12 - Members 직장·직업·직책 긴급 추가
+
+### Summary
+
+* `members` 개인 상세 선택 필드로 `workplace`, `occupation`, `job_title`을 추가했다.
+* TypeScript 타입과 mock data, 성도 상세 화면, Apps Script 상세 정규화를 업데이트했다.
+* 세 필드는 성도 목록에 노출하지 않고 권한 검증된 개인 상세에서만 반환·표시하도록 문서화했다.
+* 기존 `members` Sheet에 추가할 컬럼명과 빈 값 허용 규칙을 기록했다.
+
+### Changed Files
+
+* `AGENTS.md`
+* `lib/types.ts`
+* `lib/types.test.ts`
+* `lib/mock-data.ts`
+* `app/(protected)/members/[id]/page.tsx`
+* `gas-backend/Members.gs`
+* `docs/01_REQUIREMENTS.md`
+* `docs/02_DB_SCHEMA.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/04_API_SPEC.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `docs/10_APPS_SCRIPT_DEPLOYMENT.md`
+* `README.md`
+* `HISTORY.md`
+
+### Reason
+
+* 성도 개인 돌봄 및 관리에 필요한 직장 관련 기본 정보를 상세 화면에서 확인할 수 있도록 하기 위함.
+
+### Checks
+
+* Apps Script `getMemberDetail` 직장 필드 반환 및 목록 미노출 stub - 통과
+* Apps Script 11개 파일 JavaScript 구문 검사 - 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 31개 테스트 통과
+* `npm run build` - 전체 18개 라우트 생성 완료
+
+### TODO
+
+* 기존 실제 배포 전 `members` Sheet 첫 행에 `workplace`, `occupation`, `job_title` 컬럼 추가
+* 향후 성도 수정 API 구현 시 세 필드 저장 validation 추가
+
+---
+
+## 2026-06-12 - Phase 3-5 Admin 관리 API
+
+### Summary
+
+* Admin 전용 Users, Cells, Newcomers 관리 API를 구현했다.
+* 복수 역할 배열 변환, 셀 배정 재활성화와 soft unassign, 셀 비활성화를 지원한다.
+* 공개 새신자 등록은 개인정보 수집 동의를 필수로 검증하고, 조회·상태 변경·성도 전환은 Admin으로 제한했다.
+* 새신자 전환 시 `members`, 최초 `cell_member_history`, `newcomers`를 ID 기반으로 기록한다.
+* 주요 관리 변경을 민감정보 원문 없이 `audit_logs`에 기록한다.
+
+### Changed Files
+
+* `gas-backend/AuditLogs.gs`
+* `gas-backend/Users.gs`
+* `gas-backend/Cells.gs`
+* `gas-backend/Newcomers.gs`
+* `gas-backend/Auth.gs`
+* `gas-backend/Router.gs`
+* `gas-backend/Sheets.gs`
+* `gas-backend/Utils.gs`
+* `docs/02_DB_SCHEMA.md`
+* `docs/04_API_SPEC.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `docs/10_APPS_SCRIPT_DEPLOYMENT.md`
+* `README.md`
+* `HISTORY.md`
+
+### Reason
+
+* Phase 3-5 관리자 계정, 셀, 새신자 관리와 변경 추적을 Apps Script 서버 권한 검증 기반으로 제공하기 위함.
+
+### Checks
+
+* Apps Script 전체 `.gs` 파일 JavaScript 구문 검사 - 통과
+* Apps Script 메모리 Sheet stub 통합 검사 - Admin 차단, 복수 역할, 배정, 동의 검증, 전환, 중복 전환 차단, 감사 로그 최소화 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 31개 테스트 통과
+* `npm run build` - 전체 18개 라우트 생성 완료
+
+### TODO
+
+* 격리된 mock Spreadsheet에서 Phase 3-5 API 실제 Web App 호출 검증
+* Google OAuth 신원 검증
+* 다중 Sheet 쓰기 중간 실패 복구 절차
+* Next.js 서버 proxy 및 실제 프론트엔드 API 연결
+
+---
+
+## 2026-06-12 - Phase 4 Apps Script 실제 API 연결
+
+### Summary
+
+* `lib/api.ts`를 비동기 GAS API client와 개발용 mock fallback 구조로 정리했다.
+* `NEXT_PUBLIC_GAS_API_URL`과 Next.js `/api/gas` 서버 proxy를 추가했다.
+* verifyUser, Cells, Members, Reports, Newcomers API를 주요 프론트엔드 화면에 연결했다.
+* 실제 API URL이 없을 때만 mock fallback을 사용하며, 실제 호출 오류는 사용자 친화적 메시지로 표시한다.
+* 공통 loading, error, empty 상태를 추가했다.
+* 나눔과 기도제목 일괄 분리는 선택 셀 인원을 사용하는 로컬 rule parser로 유지했다.
+
+### Changed Files
+
+* `.env.example`
+* `app/api/gas/route.ts`
+* `lib/api.ts`
+* `lib/types.ts`
+* `hooks/use-api-data.ts`
+* `components/ui.tsx`
+* `components/mock-auth-provider.tsx`
+* `components/app-shell.tsx`
+* `components/member-card.tsx`
+* `components/newcomer-form.tsx`
+* `components/report-form.tsx`
+* `app/login/page.tsx`
+* `app/(protected)/dashboard/page.tsx`
+* `app/(protected)/admin/dashboard/page.tsx`
+* `app/(protected)/admin/newcomers/page.tsx`
+* `app/(protected)/members/page.tsx`
+* `app/(protected)/members/[id]/page.tsx`
+* `app/(protected)/reports/page.tsx`
+* `app/(protected)/reports/[id]/page.tsx`
+* `README.md`
+* `docs/04_API_SPEC.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `docs/10_APPS_SCRIPT_DEPLOYMENT.md`
+* `HISTORY.md`
+
+### Reason
+
+* Phase 4 범위에 따라 mock 중심 데이터 흐름을 실제 Apps Script Web App 호출 구조로 전환하기 위함.
+
+### Checks
+
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 33개 테스트 통과
+* `npm run build` - `/api/gas` 포함 전체 19개 라우트 생성 완료
+
+### TODO
+
+* 격리된 mock Spreadsheet와 실제 배포 URL로 Phase 4 통합 호출 검증
+* Google OAuth 신원 검증
+* Users / Cells 관리 화면 및 Absence / Settings / Backup 실제 API 연동
+* `admin,cell_leader` 겸임자의 leaderMode 서버 조회 범위 분리
+
+---
+
+## 2026-06-12 - Phase 5 Google OAuth 및 role 접근 제어
+
+### Summary
+
+* Auth.js Google OAuth provider와 암호화 JWT 로그인 세션을 적용했다.
+* 로그인 및 세션 확인 시 Apps Script `verifyUser`를 호출해 미등록·비활성 계정을 차단한다.
+* admin, cell_leader, 복수 role에 따라 로그인 redirect와 메뉴를 분기한다.
+* middleware, 보호 layout, Admin layout에서 페이지 접근 권한을 서버 측으로 검증한다.
+* `/api/gas`가 보호 요청 이메일을 세션 이메일로 강제하고, Apps Script가 `API_PROXY_SECRET`을 확인하도록 보강했다.
+
+### Changed Files
+
+* `auth.ts`
+* `middleware.ts`
+* `types/next-auth.d.ts`
+* `lib/auth.ts`
+* `lib/auth.test.ts`
+* `lib/gas-server.ts`
+* `components/auth-provider.tsx`
+* `components/app-shell.tsx`
+* `components/admin-guard.tsx`
+* `app/layout.tsx`
+* `app/login/page.tsx`
+* `app/auth/after-login/page.tsx`
+* `app/(protected)/layout.tsx`
+* `app/(protected)/admin/layout.tsx`
+* `app/api/auth/[...nextauth]/route.ts`
+* `app/api/gas/route.ts`
+* `gas-backend/Auth.gs`
+* `gas-backend/Config.gs`
+* `.env.example`
+* `package.json`
+* `package-lock.json`
+* `README.md`
+* `docs/04_API_SPEC.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `docs/10_APPS_SCRIPT_DEPLOYMENT.md`
+* `HISTORY.md`
+
+### Reason
+
+* Google 로그인 이메일을 신뢰 가능한 세션 신원으로 사용하고 role 기반 페이지·API 접근 제어를 실제 적용하기 위함.
+
+### Checks
+
+* Apps Script 전체 `.gs` JavaScript 구문 검사 - 통과
+* Apps Script trusted proxy secret guard stub - 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 35개 테스트 통과
+* `npm run build` - Auth route와 middleware 포함 전체 21개 라우트 생성 완료
+* `npm audit --omit=dev` - Next.js 내부 PostCSS 관련 moderate 2건 확인, 현재 설치 범위 내 비파괴 fix 없음
+
+### TODO
+
+* 실제 Google OAuth client와 격리된 mock Spreadsheet를 사용한 로그인 통합 검증
+* `admin,cell_leader` 겸임자의 leaderMode 서버 조회 범위 분리
+* OAuth 로그인·로그아웃 브라우저 자동화 테스트
+* Auth.js middleware Edge Runtime 경고와 Next.js 내부 PostCSS advisory 후속 버전 점검
