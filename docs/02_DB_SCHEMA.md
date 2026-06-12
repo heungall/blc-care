@@ -118,6 +118,10 @@ audit_logs
 
 각 Sheet의 첫 번째 Row는 반드시 컬럼명으로 사용한다.
 
+Apps Script 편집기에서 `initializeDatabase()`를 실행하면 이 문서 기준의 Sheet와 컬럼명을 자동 생성할 수 있다. 기존 데이터는 삭제하거나 재정렬하지 않고, 문서에 정의된 누락 컬럼만 오른쪽에 추가한다. 문서에 없는 컬럼, 중복 컬럼, 중간의 빈 컬럼이 있으면 자동 변경하지 않고 초기화를 중단한다.
+
+`validateDatabaseSchema()`는 데이터를 변경하지 않고 필수 Sheet와 컬럼 구성을 검사한다.
+
 ---
 
 # 4. users

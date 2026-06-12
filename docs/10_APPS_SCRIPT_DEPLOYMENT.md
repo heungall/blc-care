@@ -27,8 +27,12 @@ weekly_cell_reports
 weekly_member_records
 member_notes
 newcomers
+absence_alerts
+settings
 audit_logs
 ```
+
+`gas-backend/Initializer.gs`의 `initializeDatabase()`를 사용하면 위 Sheet와 첫 행 헤더를 자동 생성할 수 있다.
 
 ### 2.1 최소 mock 데이터
 
@@ -72,9 +76,30 @@ audit_logs
 3. `gas-backend/*.gs`와 동일한 이름의 스크립트 파일을 만들고 내용을 추가한다.
 4. 프로젝트 설정에서 시간대를 `Asia/Seoul`로 설정한다.
 5. 프로젝트를 저장한다.
-6. 배포 과정에서 요청되는 Spreadsheet 접근 권한만 검토하고 승인한다.
+6. `SHEET_ID` Script Property를 먼저 설정한다.
+7. Apps Script 편집기 상단 함수 선택에서 `initializeDatabase`를 선택하고 실행한다.
+8. 최초 실행 시 요청되는 Spreadsheet 접근 권한을 검토하고 승인한다.
+9. 실행 로그에서 `created_count`, `updated_count`, `unchanged_count`를 확인한다.
+10. `validateDatabaseSchema`를 실행해 전체 Sheet 구성이 유효한지 확인한다.
 
 실행 계정은 테스트 Spreadsheet 읽기 권한을 가져야 한다.
+
+### 3.1 자동 초기화 동작
+
+`initializeDatabase()`는 Apps Script 편집기에서 관리자만 직접 실행하는 함수이며 Web App API action으로 노출하지 않는다.
+
+```txt
+없는 Sheet: 생성 후 첫 행 헤더 입력
+빈 Sheet: 첫 행 헤더 입력
+기존 Sheet: 문서에 정의된 누락 헤더만 오른쪽에 추가
+기존 데이터 행: 변경하지 않음
+알 수 없는 컬럼, 중복 컬럼, 중간 빈 컬럼: 오류 후 중단
+```
+
+함수는 반복 실행해도 이미 올바른 Sheet와 헤더를 다시 만들거나 데이터를 덮어쓰지 않는다.
+쓰기 전에 기존 모든 Sheet의 헤더를 먼저 검사하므로 충돌이 발견되면 새 Sheet 생성이나 헤더 추가를 시작하지 않는다.
+
+`validateDatabaseSchema()`는 쓰기 없이 필수 Sheet와 헤더를 점검한다.
 
 ## 4. Script Properties
 
@@ -92,6 +117,8 @@ SHEET_ID = <TEST_SPREADSHEET_ID>
 ```
 
 Phase 5 보호 API는 `SHEET_ID`와 `API_PROXY_SECRET`이 모두 필요하다.
+
+초기 Sheet 생성만 먼저 수행할 때는 `SHEET_ID` 설정 후 `initializeDatabase()`를 실행할 수 있다. Web App 호출 전에는 반드시 `API_PROXY_SECRET`도 설정한다.
 
 ## 5. Web App 배포
 

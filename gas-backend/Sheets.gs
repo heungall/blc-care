@@ -8,6 +8,8 @@ var SHEET_NAMES = Object.freeze({
   WEEKLY_MEMBER_RECORDS: "weekly_member_records",
   MEMBER_NOTES: "member_notes",
   NEWCOMERS: "newcomers",
+  ABSENCE_ALERTS: "absence_alerts",
+  SETTINGS: "settings",
   AUDIT_LOGS: "audit_logs",
 });
 

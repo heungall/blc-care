@@ -704,3 +704,42 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 * `admin,cell_leader` 겸임자의 leaderMode 서버 조회 범위 분리
 * OAuth 로그인·로그아웃 브라우저 자동화 테스트
 * Auth.js middleware Edge Runtime 경고와 Next.js 내부 PostCSS advisory 후속 버전 점검
+
+---
+
+## 2026-06-12 - Apps Script DB 자동 초기화 함수
+
+### Summary
+
+* `initializeDatabase()`로 DB Schema 기준 12개 Sheet와 첫 행 헤더를 자동 생성하도록 구현했다.
+* 반복 실행 시 기존 데이터와 헤더를 덮어쓰지 않고 문서화된 누락 헤더만 오른쪽에 추가하도록 했다.
+* 알 수 없는 컬럼, 중복 컬럼, 중간 빈 컬럼은 자동 변경하지 않고 오류로 중단한다.
+* `validateDatabaseSchema()`로 쓰기 없이 전체 Sheet 구성을 검사할 수 있도록 했다.
+* 실제 사용자, 성도, 새신자 등 개인정보 데이터는 자동 생성하지 않는다.
+
+### Changed Files
+
+* `gas-backend/Initializer.gs`
+* `gas-backend/Sheets.gs`
+* `docs/02_DB_SCHEMA.md`
+* `docs/10_APPS_SCRIPT_DEPLOYMENT.md`
+* `README.md`
+* `HISTORY.md`
+
+### Reason
+
+* Apps Script와 Spreadsheet를 처음 설정할 때 수동 Sheet·헤더 생성 과정의 누락과 오타를 줄이기 위함.
+
+### Checks
+
+* Apps Script 16개 `.gs` 파일 JavaScript 구문 검사 - 통과
+* Apps Script 메모리 Spreadsheet stub - 최초 생성, 누락 헤더 추가, 기존 행 보존, 재실행 멱등성, 스키마 검증, 알 수 없는 헤더 차단 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 35개 테스트 통과
+* `npm run build` - 통과, 기존 Auth.js middleware Edge Runtime 경고 유지
+
+### TODO
+
+* 실제 빈 테스트 Spreadsheet에서 `initializeDatabase()` 최초 실행 확인
+* 최초 Admin 계정은 자동 생성하지 않고 운영자가 `users` Sheet에 직접 등록
