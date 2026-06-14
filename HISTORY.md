@@ -900,3 +900,36 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 * Docker Desktop 실행 후 Supabase reset, pgTAP RLS 테스트, DB lint 통과 확인
 * hosted Supabase 프로젝트 생성 및 link 후 migration 적용 확인
 * 공개 새신자 제출용 Next.js Route Handler 구현
+
+---
+
+## 2026-06-14 - Hosted Supabase 초기 Migration 적용
+
+### Summary
+
+* Supabase CLI를 hosted 프로젝트에 연결했다.
+* 초기 PostgreSQL schema와 RLS migration을 원격 DB에 적용했다.
+* 로컬 및 원격 migration 버전이 `202606140001`로 일치함을 확인했다.
+* 원격 `public`, `extensions` schema lint에서 오류가 없음을 확인했다.
+
+### Changed Files
+
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* Vercel의 후속 Supabase API 전환 전에 hosted 데이터베이스 기반과 RLS 정책을 배포하기 위함.
+
+### Checks
+
+* `supabase db push --include-all` - 통과
+* `supabase migration list --linked` - 로컬/원격 `202606140001` 일치
+* `supabase db lint --linked --level warning --fail-on error` - 오류 없음
+* `supabase test db --linked` - Supabase CLI 테스트 러너가 Docker 이미지를 요구하여 미실행
+
+### TODO
+
+* Docker 사용 가능한 환경에서 pgTAP RLS 테스트 28개 실행
+* Supabase browser/server client 구성
+* 공개 새신자 제출용 Next.js Route Handler 구현

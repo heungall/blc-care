@@ -9,9 +9,10 @@
 - [x] Supabase 환경변수 템플릿 추가
 - [x] 기술 스택 변경을 요구사항, DB, 권한, 개인정보, 개발 계획 문서에 기록
 - [x] Supabase CLI를 개발 의존성으로 설치
-- [ ] Supabase hosted project 생성
-- [ ] Project URL, publishable key, secret key를 로컬 및 Vercel 환경변수에 등록
-- [ ] Supabase CLI로 hosted project link 확인
+- [x] Supabase hosted project 생성
+- [x] Project URL, publishable key, secret key를 로컬 환경변수에 등록
+- [ ] Project URL, publishable key, secret key를 Vercel 환경변수에 등록
+- [x] Supabase CLI로 hosted project link 확인
 
 완료 기준:
 
@@ -29,6 +30,7 @@
 - [x] Admin 전체 접근, 셀리더 배정 셀 접근 정책 구현
 - [x] 공개 새신자 등록용 제한된 서버 경로 설계
 - [x] RLS 정책 테스트 추가
+- [x] hosted Supabase에 초기 migration 적용 및 원격 DB lint 통과 확인
 - [ ] Docker 기반 로컬 Supabase에서 migration reset, RLS 테스트, DB lint 통과 확인
 
 ## 3. Supabase Auth 및 API 전환
