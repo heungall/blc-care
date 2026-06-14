@@ -1032,3 +1032,29 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 * Vercel에 `NEXT_PUBLIC_SITE_URL`과 Supabase 환경변수 등록
 * Supabase Auth Redirect URL allow list에 배포 도메인의 `/auth/callback` 등록
 * private Storage 사진 업로드와 앱 내 내보내기 기능 구현
+
+---
+
+## 2026-06-14 - Hosted Supabase Google OAuth 활성화
+
+### Summary
+
+* hosted Supabase Auth에서 Google provider를 활성화했다.
+* 최초 Google 로그인 사용자가 `auth.users`에 생성될 수 있도록 signup을 허용했다.
+* 앱 접근은 계속 `public.users`의 등록 상태, active, roles 검증으로 제한한다.
+
+### Changed Files
+
+* `supabase/config.toml`
+* `README.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Checks
+
+* hosted Auth config에서 `external_google_enabled = true`, `disable_signup = false` 확인
+* Google authorize endpoint가 `302`로 Google OAuth 화면에 리디렉션됨을 확인
+
+### TODO
+
+* Vercel 배포 도메인의 `/auth/callback`을 Supabase Redirect URL allow list에 등록하고 실제 로그인 검증

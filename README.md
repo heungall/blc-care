@@ -85,6 +85,9 @@ https://<PRODUCTION_DOMAIN>/auth/callback
 Google Cloud OAuth client의 승인된 리디렉션 URI에는 Supabase Dashboard가 안내하는
 `https://<PROJECT_REF>.supabase.co/auth/v1/callback`을 등록합니다.
 
+Supabase Auth의 신규 사용자 생성은 허용해야 최초 Google 로그인이 `auth.users`에 생성됩니다.
+실제 앱 접근은 별도의 `public.users` 등록 상태와 active/roles 검증으로 제한합니다.
+
 브라우저에서 `http://localhost:3000`으로 접속합니다.
 
 ## 검증 명령

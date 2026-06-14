@@ -36,7 +36,7 @@
 ## 3. Supabase Auth 및 API 전환
 
 - [x] `@supabase/supabase-js`, `@supabase/ssr` 설치
-- [x] Supabase Google OAuth 설정
+- [ ] Supabase hosted Google OAuth 활성화 및 배포 도메인 로그인 검증
 - [x] 브라우저 / 서버 Supabase client 구성
 - [x] 기존 Auth.js 및 `/api/gas` 의존성 제거
 - [x] `lib/api.ts`를 Supabase query / Route Handler 기반으로 교체
