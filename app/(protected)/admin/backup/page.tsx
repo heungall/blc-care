@@ -2,43 +2,45 @@
 
 import { useState } from "react";
 import { AdminGuard } from "@/components/admin-guard";
+import { useAuth } from "@/components/auth-provider";
 import { PageHeader } from "@/components/page-header";
-import { Badge, Button, Card } from "@/components/ui";
-import { mockApi as api } from "@/lib/api";
-import type { BackupHistory } from "@/lib/types";
+import { Badge, Button, Card, EmptyState, ErrorState, LoadingState } from "@/components/ui";
+import { useApiData } from "@/hooks/use-api-data";
+import { api, getApiErrorMessage } from "@/lib/api";
 
 export default function AdminBackupPage() {
-  const [history, setHistory] = useState<BackupHistory[]>(api.getBackupHistory());
+  const { user } = useAuth();
+  const state = useApiData(() => api.getBackupHistory(user), [user.email]);
   const [message, setMessage] = useState("");
+  const [creating, setCreating] = useState(false);
 
-  const create = (format: "CSV" | "XLSX") => {
-    const result = api.createBackup(format);
-    setHistory((items) => [{ backup_id: `backup_mock_${Date.now()}`, format, created_at: "2026-06-12 12:00:00", created_by: "user_admin", status: "mock" }, ...items]);
-    setMessage(result.message);
+  const create = async (format: "CSV" | "XLSX") => {
+    setCreating(true);
+    setMessage("");
+    try {
+      await api.createBackup(user, format);
+      await state.reload();
+      setMessage(`${format} 백업을 Google Drive에 생성했습니다.`);
+    } catch (error) {
+      setMessage(getApiErrorMessage(error));
+    } finally {
+      setCreating(false);
+    }
   };
 
-  return (
-    <AdminGuard>
-      <PageHeader title="백업 및 내보내기" description="실제 Google Sheets·Drive 연결 없이 mock 백업 흐름만 확인합니다." />
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card>
-          <h2 className="text-lg font-bold">저장 위치</h2>
-          <div className="mt-4 space-y-3">
-            <div className="rounded-xl bg-slate-50 p-4"><p className="font-semibold">Google Sheets DB</p><p className="mt-1 text-sm text-slate-500">Phase 3 이후 실제 링크 연결 예정</p></div>
-            <div className="rounded-xl bg-slate-50 p-4"><p className="font-semibold">Google Drive 백업 폴더</p><p className="mt-1 text-sm text-slate-500">Phase 3 이후 실제 링크 연결 예정</p></div>
-          </div>
-        </Card>
-        <Card>
-          <h2 className="text-lg font-bold">새 백업 생성</h2>
-          <p className="mt-2 text-sm text-slate-500">버튼은 파일을 생성하거나 외부 서비스에 연결하지 않습니다.</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2"><Button type="button" variant="secondary" onClick={() => create("CSV")}>CSV mock 내보내기</Button><Button type="button" onClick={() => create("XLSX")}>XLSX mock 백업</Button></div>
-          {message && <p className="mt-4 text-sm font-semibold text-green-700">{message}</p>}
-        </Card>
-      </div>
-      <Card className="mt-5">
-        <h2 className="text-lg font-bold">최근 백업 이력</h2>
-        <div className="mt-4 space-y-3">{history.map((item) => <div key={item.backup_id} className="flex flex-col gap-2 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">{item.format} 백업</p><p className="mt-1 text-xs text-slate-500">{item.created_at} · {api.userName(item.created_by)}</p></div><Badge tone="neutral">mock</Badge></div>)}</div>
-      </Card>
-    </AdminGuard>
-  );
+  return <AdminGuard>
+    <PageHeader title="백업 및 내보내기" description="Google Sheets 데이터를 지정된 Google Drive 폴더에 백업합니다." />
+    {state.loading && <LoadingState />}
+    {state.error && <ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState>}
+    <Card>
+      <h2 className="text-lg font-bold">새 백업 생성</h2>
+      <p className="mt-2 text-sm text-slate-500">CSV는 전체 Sheet를 ZIP으로, XLSX는 통합 문서 파일로 생성합니다.</p>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2"><Button type="button" variant="secondary" disabled={creating} onClick={() => void create("CSV")}>CSV ZIP 생성</Button><Button type="button" disabled={creating} onClick={() => void create("XLSX")}>XLSX 생성</Button></div>
+      {message && <p className="mt-4 text-sm font-semibold text-slate-700">{message}</p>}
+    </Card>
+    {state.data && <Card className="mt-5">
+      <h2 className="text-lg font-bold">최근 백업 이력</h2>
+      {state.data.length ? <div className="mt-4 space-y-3">{state.data.map((item) => <div key={item.backup_id} className="flex flex-col gap-2 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">{item.format} 백업</p><p className="mt-1 text-xs text-slate-500">{item.created_at} · {item.created_by}</p></div><div className="flex items-center gap-2"><Badge tone="success">완료</Badge>{item.file_url && <a href={item.file_url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-blue-700">Drive에서 열기</a>}</div></div>)}</div> : <div className="mt-4"><EmptyState>생성된 백업이 없습니다.</EmptyState></div>}
+    </Card>}
+  </AdminGuard>;
 }

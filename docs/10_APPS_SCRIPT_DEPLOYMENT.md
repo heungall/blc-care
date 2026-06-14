@@ -170,7 +170,15 @@ AUTH_GOOGLE_SECRET=<GOOGLE_OAUTH_CLIENT_SECRET>
 
 브라우저는 Apps Script를 직접 호출하지 않고 Next.js `/api/gas` Route Handler를 호출한다. Route Handler가 Apps Script 리다이렉트를 따라가므로 브라우저 CORS 제약을 피한다.
 
-환경변수가 없으면 개발용 mock fallback이 사용된다. 실제 URL이 설정된 상태에서 호출이 실패하면 오류를 표시하며 mock으로 자동 전환하지 않는다.
+환경변수가 없거나 실제 URL 호출이 실패하면 오류를 표시하며 mock으로 자동 전환하지 않는다.
+
+Drive 백업 기능을 사용할 때 Apps Script Script Properties에 다음 값도 설정한다.
+
+```txt
+BACKUP_FOLDER_ID=<격리된 Google Drive 백업 폴더 ID>
+```
+
+Apps Script 실행 계정에 해당 폴더 쓰기 권한이 있어야 한다.
 
 Google Cloud Console OAuth Web client의 승인된 리디렉션 URI에는 다음을 등록한다.
 

@@ -884,7 +884,7 @@ requestUser.email은 아직 Google OAuth 신원 검증 값이 아님
 2026-06-12 기준 mock API 중심 프론트엔드를 Apps Script Web App 실제 호출 구조로 전환했다.
 
 ```txt
-lib/api.ts 비동기 API client 및 개발용 mock fallback
+lib/api.ts 비동기 Apps Script API client
 NEXT_PUBLIC_GAS_API_URL 환경변수
 Next.js /api/gas 서버 proxy
 verifyUser 실제 호출
@@ -893,7 +893,7 @@ Members / Reports / Newcomers 실제 API 연동
 사용자 친화적 API 오류 메시지
 ```
 
-브라우저 직접 Apps Script 호출은 CORS 제약 때문에 사용하지 않는다. 환경변수가 설정되면 실제 API만 사용하고, 호출 실패를 mock으로 숨기지 않는다. 환경변수가 없을 때만 개발용 mock fallback을 사용한다.
+브라우저 직접 Apps Script 호출은 CORS 제약 때문에 사용하지 않는다. 실제 API만 사용하고, 설정 누락 또는 호출 실패를 mock으로 숨기지 않는다.
 
 나눔과 기도제목 일괄 분리는 선택 셀 인원을 전달받는 로컬 rule parser를 유지한다. 외부 AI를 사용하지 않으며 사용자 확인 전에는 저장하지 않는다.
 
@@ -902,7 +902,7 @@ Phase 4 제한:
 ```txt
 Google OAuth 신원 검증 미구현
 샘플 사용자 이메일을 requestUser.email로 사용
-Users / Cells 관리 화면과 Absence / Settings / Backup은 개발용 mock UI 유지
+Users / Cells / Absence / Settings / Backup 관리 화면 실제 API 연결 완료
 admin,cell_leader 겸임자의 leaderMode 서버 조회 범위 분리 미구현
 실제 배포 URL과 격리된 mock Spreadsheet 통합 호출 검증 필요
 ```

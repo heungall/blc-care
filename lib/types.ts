@@ -240,7 +240,8 @@ export type BackupHistory = {
   format: "CSV" | "XLSX";
   created_at: DateTimeString;
   created_by: string;
-  status: "completed" | "mock";
+  status: "completed";
+  file_url?: string;
 };
 
 export type PrayerCandidate = {

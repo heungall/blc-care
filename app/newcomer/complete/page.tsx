@@ -7,7 +7,7 @@ export default function NewcomerCompletePage() {
         <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-green-100 text-xl font-bold text-green-700">✓</div>
         <h1 className="mt-5 text-2xl font-bold">등록이 완료되었습니다</h1>
         <p className="mt-3 text-sm leading-6 text-slate-500">
-          방문해주셔서 감사합니다. Phase 1에서는 실제 서버에 정보가 저장되지 않습니다.
+          방문해주셔서 감사합니다. 등록 내용이 안전하게 접수되었습니다.
         </p>
         <LinkButton href="/" className="mt-7 w-full">처음으로</LinkButton>
       </Card>

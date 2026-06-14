@@ -447,7 +447,7 @@ createNewcomer / getNewcomers / updateNewcomerStatus / convertNewcomerToMember
 
 기도제목과 나눔 일괄 분리는 Phase 4에서도 프론트엔드 로컬 rule parser를 유지한다. 선택 셀의 API 응답 인원만 후보로 사용하고, 결과 확인 후에만 리포트 입력값에 반영한다. `parsePrayerRequests` API client 함수는 향후 서버 parser 비교 검증을 위해 유지한다.
 
-`NEXT_PUBLIC_GAS_API_URL`이 없으면 개발 환경에서 mock fallback을 사용한다. URL이 설정된 상태에서 실제 호출이 실패하면 mock 데이터로 자동 대체하지 않고 공통 오류 상태를 표시한다.
+`NEXT_PUBLIC_GAS_API_URL`과 `GAS_PROXY_SECRET`은 필수다. 설정이 없거나 실제 호출이 실패하면 mock 데이터로 대체하지 않고 공통 오류 상태를 표시한다.
 
 Phase 4에서도 샘플 이메일 선택 방식이며 Google OAuth 신원 검증은 미구현이다.
 
@@ -468,3 +468,33 @@ Google OAuth 로그인
 `createNewcomer`만 비로그인 공개 action으로 유지한다. 그 외 `/api/gas` action은 로그인 세션이 없으면 `UNAUTHORIZED`를 반환한다.
 
 Next.js의 `GAS_PROXY_SECRET`과 Apps Script Script Property의 `API_PROXY_SECRET`은 동일한 긴 임의 문자열을 사용한다. 보호 Apps Script API는 올바른 proxy secret이 없는 직접 호출을 거부한다.
+
+---
+
+## 17. 운영 관리 API
+
+다음 action은 모두 Admin 전용이며 Apps Script에서 역할을 다시 검증한다.
+
+### 17.1 Users / Cells
+
+- `getUsers`, `createUser`, `updateUser`, `assignUserToCell`, `unassignUserFromCell`
+- `getCells`, `createCell`, `updateCell`
+- 사용자와 셀 변경은 `audit_logs`에 개인정보 원문을 복제하지 않고 기록한다.
+
+### 17.2 Absence
+
+- `getAbsenceAlerts`: `absence_alerts` 목록을 반환한다.
+- `updateAbsenceAlert`: `status`, `memo`, 처리 시각과 처리 사용자를 저장한다.
+- 허용 상태는 `open`, `checked`, `resolved`다.
+
+### 17.3 Settings
+
+- `getSettings`: `settings` Sheet를 `AppSettings` 객체로 변환한다.
+- `updateSettings`: 문서화된 설정 키만 ID 기반 upsert하고 변경 키 목록을 감사 로그에 기록한다.
+
+### 17.4 Backup
+
+- `getBackupHistory`: 지정된 Drive 백업 폴더에서 BLC Care가 생성한 최근 백업 이력을 반환한다.
+- `createBackup`: 전체 Sheet를 CSV ZIP 또는 XLSX로 생성해 지정된 Drive 폴더에 저장한다.
+- Apps Script Script Property `BACKUP_FOLDER_ID`가 필수다.
+- 백업 파일 설명에는 형식, 생성 시각, 생성 사용자 ID만 저장하며 민감정보를 추가 기록하지 않는다.

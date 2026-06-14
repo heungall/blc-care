@@ -743,3 +743,62 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 
 * 실제 빈 테스트 Spreadsheet에서 `initializeDatabase()` 최초 실행 확인
 * 최초 Admin 계정은 자동 생성하지 않고 운영자가 `users` Sheet에 직접 등록
+
+---
+
+## 2026-06-14 - Runtime mock 제거 및 운영 관리 API 연결
+
+### Summary
+
+* 사용자가 실제 빈 테스트 Spreadsheet에서 `initializeDatabase()` 실행을 검증했다.
+* 프론트엔드 API client의 개발용 mock fallback과 관리자 화면의 mock 동작을 제거했다.
+* Users, Cells 관리 화면을 기존 Apps Script 관리 API에 연결했다.
+* Absence, Settings, Backup Apps Script API와 실제 관리자 화면 연동을 구현했다.
+* 백업은 `BACKUP_FOLDER_ID`에 지정된 Google Drive 폴더에 CSV ZIP 또는 XLSX로 생성한다.
+
+### Changed Files
+
+* `lib/api.ts`
+* `lib/api.test.ts`
+* `lib/types.ts`
+* `lib/mock-data.ts`
+* `app/(protected)/admin/users/page.tsx`
+* `app/(protected)/admin/cells/page.tsx`
+* `app/(protected)/admin/absence/page.tsx`
+* `app/(protected)/admin/settings/page.tsx`
+* `app/(protected)/admin/backup/page.tsx`
+* `app/newcomer/complete/page.tsx`
+* `components/newcomer-form.tsx`
+* `gas-backend/Absence.gs`
+* `gas-backend/Settings.gs`
+* `gas-backend/Backup.gs`
+* `gas-backend/Config.gs`
+* `gas-backend/Router.gs`
+* `.env.example`
+* `README.md`
+* `docs/04_API_SPEC.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `docs/10_APPS_SCRIPT_DEPLOYMENT.md`
+* `HISTORY.md`
+
+### Reason
+
+* 초기 mock UI 단계를 종료하고 Google Apps Script와 Google Sheets를 실제 런타임 데이터 계층으로 사용하기 위함.
+* API 설정 누락이나 호출 실패가 mock 데이터로 조용히 대체되지 않도록 하기 위함.
+
+### Checks
+
+* Apps Script 전체 `.gs` 파일 JavaScript 구문 검사 - 통과
+* 프로덕션 경로의 `mockApi`, `mock-data`, mock fallback 참조 없음 확인
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 34개 테스트 통과
+* `npm run build` - 전체 19개 라우트 생성 완료, 기존 Auth.js Edge Runtime 경고 유지
+* `npm run dev` 브라우저 확인 - 로컬 서버 실행 권한 미승인으로 미실행
+
+### TODO
+
+* Apps Script에 `BACKUP_FOLDER_ID`를 설정하고 CSV ZIP / XLSX 실제 Drive 생성 검증
+* 새 Absence / Settings / Backup action을 포함해 Apps Script Web App 새 버전 배포
+* 실제 Google OAuth 세션으로 관리자 Users / Cells / Absence / Settings / Backup 통합 확인
+* `admin,cell_leader` 겸임자의 leaderMode 서버 조회 범위 분리

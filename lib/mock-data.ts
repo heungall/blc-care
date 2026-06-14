@@ -356,13 +356,13 @@ export const mockBackupHistory: BackupHistory[] = [
     format: "XLSX",
     created_at: "2026-06-08 09:00:00",
     created_by: "user_admin",
-    status: "mock",
+    status: "completed",
   },
   {
     backup_id: "backup_mock_002",
     format: "CSV",
     created_at: "2026-06-01 09:00:00",
     created_by: "user_dual",
-    status: "mock",
+    status: "completed",
   },
 ];
