@@ -26,6 +26,12 @@ function handleRequest_(method, event) {
       getNewcomers: getNewcomers,
       updateNewcomerStatus: updateNewcomerStatus,
       convertNewcomerToMember: convertNewcomerToMember,
+      getAbsenceAlerts: getAbsenceAlerts,
+      updateAbsenceAlert: updateAbsenceAlert,
+      getSettings: getSettings,
+      updateSettings: updateSettings,
+      getBackupHistory: getBackupHistory,
+      createBackup: createBackup,
     };
     var handler = routes[request.action];
 

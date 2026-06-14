@@ -1,17 +1,9 @@
-import {
-  mockCells,
-  mockAbsenceAlerts,
-  mockAssignments,
-  mockBackupHistory,
-  mockMemberNotes,
-  mockMembers,
-  mockNewcomers,
-  mockReports,
-  mockSettings,
-  mockUsers,
-} from "@/lib/mock-data";
-import { parsePrayerText } from "@/lib/prayer-parser";
 import type {
+  AbsenceAlert,
+  AbsenceAlertStatus,
+  AppSettings,
+  AssignmentRole,
+  BackupHistory,
   Cell,
   Member,
   MemberNote,
@@ -23,10 +15,6 @@ import type {
   User,
   WeeklyCellReport,
   WeeklyMemberRecord,
-  WeeklyReport,
-  AbsenceAlertStatus,
-  AppSettings,
-  AssignmentRole,
   Role,
 } from "@/lib/types";
 
@@ -46,6 +34,15 @@ export type VerifiedUser = User & {
     cell_id: string;
     cell_name: string;
     assignment_role: string;
+  }>;
+};
+
+export type ManagedUser = User & {
+  assigned_cells: Array<{
+    assignment_id: string;
+    cell_id: string;
+    cell_name: string;
+    assignment_role: AssignmentRole;
   }>;
 };
 
@@ -96,8 +93,6 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
-
-export const isGasApiConfigured = Boolean(process.env.NEXT_PUBLIC_GAS_API_URL);
 
 const friendlyMessages: Record<string, string> = {
   BAD_REQUEST: "입력 내용을 다시 확인해주세요.",
@@ -151,220 +146,67 @@ async function gasRequest<T>(
   return payload.data;
 }
 
-function mockVerifiedUser(email: string): VerifiedUser {
-  const user = mockUsers.find((item) => item.email.toLowerCase() === email.toLowerCase());
-  if (!user) throw new ApiError("UNAUTHORIZED", friendlyMessages.UNAUTHORIZED);
-  return { ...user, assigned_cells: [] };
-}
-
-function mockMemberDetail(memberId: string): MemberDetail {
-  const member = mockMembers.find((item) => item.member_id === memberId);
-  if (!member) throw new ApiError("NOT_FOUND", friendlyMessages.NOT_FOUND);
-  return {
-    member: {
-      ...member,
-      current_cell_name: mockCells.find((cell) => cell.cell_id === member.current_cell_id)?.cell_name,
-    },
-    history: {
-      records: mockReports.flatMap((report) => report.records).filter((record) => record.member_id === memberId),
-      notes: mockMemberNotes.filter((note) => note.member_id === memberId),
-    },
-  };
-}
-
-function mockReportList(): ReportListItem[] {
-  return mockReports.map((report) => ({
-    ...report,
-    cell_name: mockCells.find((cell) => cell.cell_id === report.cell_id)?.cell_name ?? "미지정 셀",
-    leader_name: mockUsers.find((user) => user.user_id === report.leader_user_id)?.name ?? "작성자 미지정",
-    record_count: report.records.length,
-  }));
-}
-
-async function withFallback<T>(realCall: () => Promise<T>, mockCall: () => T | Promise<T>) {
-  return isGasApiConfigured ? realCall() : mockCall();
-}
-
 export const api = {
-  verifyUser: (email: string) =>
-    withFallback(
-      async () => {
-        const user = await gasRequest<VerifiedUser>("verifyUser", email);
-        return {
-          ...user,
-          created_at: user.created_at ?? "",
-          updated_at: user.updated_at ?? "",
-        };
-      },
-      () => mockVerifiedUser(email),
-    ),
-  getCells: (user: User) =>
-    withFallback(
-      async () => (await gasRequest<{ items: Cell[] }>("getCells", user.email)).items,
-      () => mockCells,
-    ),
-  getMembers: (user: User, data: Record<string, unknown> = {}) =>
-    withFallback(
-      async () => (await gasRequest<{ items: MemberView[] }>("getMembers", user.email, data)).items,
-      () => mockMembers,
-    ),
+  verifyUser: async (email: string) => {
+    const user = await gasRequest<VerifiedUser>("verifyUser", email);
+    return { ...user, created_at: user.created_at ?? "", updated_at: user.updated_at ?? "" };
+  },
+  getCells: async (user: User) => (await gasRequest<{ items: Cell[] }>("getCells", user.email)).items,
+  getMembers: async (user: User, data: Record<string, unknown> = {}) =>
+    (await gasRequest<{ items: MemberView[] }>("getMembers", user.email, data)).items,
   getMemberDetail: (user: User, memberId: string) =>
-    withFallback(
-      () => gasRequest<MemberDetail>("getMemberDetail", user.email, { member_id: memberId }),
-      () => mockMemberDetail(memberId),
-    ),
-  getReports: (user: User, data: Record<string, unknown> = {}) =>
-    withFallback(
-      async () => (await gasRequest<{ items: ReportListItem[] }>("getReports", user.email, data)).items,
-      () => mockReportList(),
-    ),
+    gasRequest<MemberDetail>("getMemberDetail", user.email, { member_id: memberId }),
+  getReports: async (user: User, data: Record<string, unknown> = {}) =>
+    (await gasRequest<{ items: ReportListItem[] }>("getReports", user.email, data)).items,
   getReportDetail: (user: User, reportId: string) =>
-    withFallback(
-      () => gasRequest<ReportDetail>("getReportDetail", user.email, { report_id: reportId }),
-      () => {
-        const report = mockReportList().find((item) => item.report_id === reportId);
-        const source = mockReports.find((item) => item.report_id === reportId);
-        if (!report || !source) throw new ApiError("NOT_FOUND", friendlyMessages.NOT_FOUND);
-        return { report, records: source.records, can_edit: true };
-      },
-    ),
+    gasRequest<ReportDetail>("getReportDetail", user.email, { report_id: reportId }),
   getWeeklyReportDraft: (user: User, cellId: string, weekStartDate?: string) =>
-    withFallback(
-      () => gasRequest<WeeklyReportDraft>("getWeeklyReportDraft", user.email, {
-        cell_id: cellId,
-        week_start_date: weekStartDate,
-      }),
-      () => {
-        const members = mockMembers.filter((member) => member.current_cell_id === cellId);
-        const report = mockReports.find((item) => item.cell_id === cellId);
-        return {
-          is_existing: Boolean(report),
-          report: report ?? {
-            report_id: "",
-            week_start_date: weekStartDate ?? "2026-06-08",
-            week_end_date: "2026-06-14",
-            cell_id: cellId,
-            leader_user_id: user.user_id,
-            status: "draft",
-            locked: false,
-            created_at: "",
-            updated_at: "",
-          },
-          members,
-          records: report?.records ?? [],
-          can_edit: true,
-        };
-      },
-    ),
+    gasRequest<WeeklyReportDraft>("getWeeklyReportDraft", user.email, {
+      cell_id: cellId,
+      week_start_date: weekStartDate,
+    }),
   saveWeeklyReport: (user: User, payload: SaveReportPayload) =>
-    withFallback(
-      () => gasRequest<ReportDetail>("saveWeeklyReport", user.email, payload as unknown as Record<string, unknown>),
-      () => ({ report: mockReportList()[0], records: [], can_edit: true }),
-    ),
-  parsePrayerRequests: (user: User, cellId: string, rawText: string, members: Member[]) =>
-    withFallback(
-      () => gasRequest<PrayerParseResult>("parsePrayerRequests", user.email, { cell_id: cellId, raw_text: rawText }),
-      () => parsePrayerText(rawText, members),
-    ),
+    gasRequest<ReportDetail>("saveWeeklyReport", user.email, payload as unknown as Record<string, unknown>),
+  parsePrayerRequests: (user: User, cellId: string, rawText: string) =>
+    gasRequest<PrayerParseResult>("parsePrayerRequests", user.email, { cell_id: cellId, raw_text: rawText }),
   submitNewcomer: (values: NewcomerFormValues) =>
-    withFallback(
-      () => gasRequest<{ newcomer_id: string; status: NewcomerStatus; submitted_at: string }>("createNewcomer", "", values),
-      () => ({ newcomer_id: "newcomer_mock", status: "new" as const, submitted_at: "" }),
-    ),
-  getNewcomers: (user: User, data: Record<string, unknown> = {}) =>
-    withFallback(
-      async () => (await gasRequest<{ items: Newcomer[] }>("getNewcomers", user.email, data)).items,
-      () => mockNewcomers,
-    ),
+    gasRequest<{ newcomer_id: string; status: NewcomerStatus; submitted_at: string }>("createNewcomer", "", values),
+  getNewcomers: async (user: User, data: Record<string, unknown> = {}) =>
+    (await gasRequest<{ items: Newcomer[] }>("getNewcomers", user.email, data)).items,
   updateNewcomer: (user: User, newcomerId: string, status: NewcomerStatus, adminMemo: string) =>
-    withFallback(
-      () => gasRequest<Newcomer>("updateNewcomerStatus", user.email, {
-        newcomer_id: newcomerId,
-        status,
-        admin_memo: adminMemo,
-      }),
-      () => {
-        const item = mockNewcomers.find((newcomer) => newcomer.newcomer_id === newcomerId);
-        if (!item) throw new ApiError("NOT_FOUND", friendlyMessages.NOT_FOUND);
-        return { ...item, status, admin_memo: adminMemo };
-      },
-    ),
+    gasRequest<Newcomer>("updateNewcomerStatus", user.email, {
+      newcomer_id: newcomerId,
+      status,
+      admin_memo: adminMemo,
+    }),
   convertNewcomer: (user: User, newcomerId: string, cellId: string) =>
-    withFallback(
-      () => gasRequest<{ newcomer: Newcomer; member: Member; cell_member_history_id: string }>(
-        "convertNewcomerToMember",
-        user.email,
-        { newcomer_id: newcomerId, cell_id: cellId },
-      ),
-      () => {
-        const item = mockNewcomers.find((newcomer) => newcomer.newcomer_id === newcomerId);
-        if (!item) throw new ApiError("NOT_FOUND", friendlyMessages.NOT_FOUND);
-        return {
-          newcomer: { ...item, status: "converted" as const, converted_member_id: "member_mock_converted" },
-          member: mockMembers[0],
-          cell_member_history_id: "history_mock",
-        };
-      },
+    gasRequest<{ newcomer: Newcomer; member: Member; cell_member_history_id: string }>(
+      "convertNewcomerToMember",
+      user.email,
+      { newcomer_id: newcomerId, cell_id: cellId },
     ),
-};
-
-// Phase 4 keeps unsupported management screens on the existing development mock adapter.
-export const mockApi = {
-  getUsers: () => mockUsers,
-  getAssignments: () => mockAssignments,
-  getCells: (user?: User) => {
-    void user;
-    return mockCells;
-  },
-  getMembers: (user?: User) => {
-    void user;
-    return mockMembers;
-  },
-  getReports: (user?: User): WeeklyReport[] => {
-    void user;
-    return mockReports;
-  },
-  getNewcomers: () => mockNewcomers,
-  getAbsenceAlerts: () => mockAbsenceAlerts,
-  updateAbsenceAlert: (alertId: string, status: AbsenceAlertStatus, memo: string) => {
-    void [alertId, status, memo];
-    return { success: true, message: "장기결석 조치 상태를 mock으로 반영했습니다." };
-  },
-  saveCell: (cell: Cell) => {
-    void cell;
-    return { success: true, message: "셀 정보를 mock으로 반영했습니다." };
-  },
-  createCell: (cellName: string) => {
-    void cellName;
-    return { success: true, message: "새 셀을 mock으로 생성했습니다." };
-  },
-  saveUser: (userId: string, name: string, email: string, roles: Role[], active: boolean) => {
-    void [userId, name, email, roles, active];
-    return { success: true, message: "사용자 정보를 mock으로 반영했습니다." };
-  },
-  createUser: (name: string, email: string) => {
-    void [name, email];
-    return { success: true, message: "새 사용자를 mock으로 등록했습니다." };
-  },
-  assignUserToCell: (userId: string, cellId: string, assignmentRole: AssignmentRole) => {
-    void [userId, cellId, assignmentRole];
-    return { success: true, message: "담당 셀 배정을 mock으로 반영했습니다." };
-  },
-  removeUserCellAssignment: (assignmentId: string) => {
-    void assignmentId;
-    return { success: true, message: "담당 셀 배정을 mock으로 해제했습니다." };
-  },
-  getSettings: () => mockSettings,
-  saveSettings: (settings: AppSettings) => {
-    void settings;
-    return { success: true, message: "설정을 mock으로 반영했습니다." };
-  },
-  getBackupHistory: () => mockBackupHistory,
-  createBackup: (format: "CSV" | "XLSX") => {
-    void format;
-    return { success: true, message: "백업 생성을 mock으로 완료했습니다." };
-  },
-  getMemberNotes: (memberId: string) => mockMemberNotes.filter((note) => note.member_id === memberId),
-  cellName: (cellId?: string) => mockCells.find((cell) => cell.cell_id === cellId)?.cell_name ?? "미지정 셀",
-  userName: (userId: string) => mockUsers.find((user) => user.user_id === userId)?.name ?? "알 수 없음",
+  getUsers: async (user: User) => (await gasRequest<{ items: ManagedUser[] }>("getUsers", user.email)).items,
+  createUser: (user: User, data: { name: string; email: string; roles: Role[]; active?: boolean }) =>
+    gasRequest<ManagedUser>("createUser", user.email, data),
+  updateUser: (user: User, data: { user_id: string; name: string; email: string; roles: Role[]; active: boolean }) =>
+    gasRequest<ManagedUser>("updateUser", user.email, data),
+  assignUserToCell: (user: User, userId: string, cellId: string, assignmentRole: AssignmentRole) =>
+    gasRequest("assignUserToCell", user.email, { user_id: userId, cell_id: cellId, assignment_role: assignmentRole }),
+  unassignUserFromCell: (user: User, assignmentId: string) =>
+    gasRequest("unassignUserFromCell", user.email, { assignment_id: assignmentId }),
+  createCell: (user: User, cellName: string) =>
+    gasRequest<Cell>("createCell", user.email, { cell_name: cellName }),
+  updateCell: (user: User, cell: Cell) =>
+    gasRequest<Cell>("updateCell", user.email, cell as unknown as Record<string, unknown>),
+  getAbsenceAlerts: async (user: User) =>
+    (await gasRequest<{ items: AbsenceAlert[] }>("getAbsenceAlerts", user.email)).items,
+  updateAbsenceAlert: (user: User, alertId: string, status: AbsenceAlertStatus, memo: string) =>
+    gasRequest<AbsenceAlert>("updateAbsenceAlert", user.email, { alert_id: alertId, status, memo }),
+  getSettings: (user: User) => gasRequest<AppSettings>("getSettings", user.email),
+  updateSettings: (user: User, settings: AppSettings) =>
+    gasRequest<AppSettings>("updateSettings", user.email, settings as unknown as Record<string, unknown>),
+  getBackupHistory: async (user: User) =>
+    (await gasRequest<{ items: BackupHistory[] }>("getBackupHistory", user.email)).items,
+  createBackup: (user: User, format: "CSV" | "XLSX") =>
+    gasRequest<BackupHistory>("createBackup", user.email, { format }),
 };

@@ -1,6 +1,7 @@
 var CONFIG_KEYS = Object.freeze({
   SHEET_ID: "SHEET_ID",
   API_PROXY_SECRET: "API_PROXY_SECRET",
+  BACKUP_FOLDER_ID: "BACKUP_FOLDER_ID",
 });
 
 /**
@@ -25,4 +26,8 @@ function getSheetId_() {
 
 function getApiProxySecret_() {
   return getRequiredScriptProperty_(CONFIG_KEYS.API_PROXY_SECRET);
+}
+
+function getBackupFolderId_() {
+  return getRequiredScriptProperty_(CONFIG_KEYS.BACKUP_FOLDER_ID);
 }

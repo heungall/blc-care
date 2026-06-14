@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button, Card, Input, Select, Textarea } from "@/components/ui";
-import { api, getApiErrorMessage, isGasApiConfigured } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 import type { NewcomerFormValues } from "@/lib/types";
 
 export const newcomerSchema = z.object({
@@ -108,7 +108,7 @@ export function NewcomerForm() {
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>등록 내용 제출</Button>
       {errors.root?.message && <p className="rounded-xl bg-rose-50 p-3 text-center text-sm text-rose-700">{errors.root.message}</p>}
-      <p className="text-center text-xs text-slate-400">{isGasApiConfigured ? "제출 내용은 Apps Script API를 통해 저장됩니다." : "개발용 mock fallback에서는 실제 서버에 저장되지 않습니다."}</p>
+      <p className="text-center text-xs text-slate-400">제출 내용은 Apps Script API를 통해 저장됩니다.</p>
     </form>
   );
 }
