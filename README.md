@@ -2,7 +2,7 @@
 
 BLC Care는 교회 출결과 돌봄 기록을 관리하기 위한 웹 애플리케이션입니다.
 
-현재 **Phase 5 Google OAuth 로그인과 role 기반 접근 제어**까지 구현되어 있습니다. 보호 API는 로그인 세션 이메일과 Apps Script proxy secret을 함께 검증합니다.
+현재 Google Apps Script 기반 구현에서 Supabase PostgreSQL, Auth, Storage 기반 구조로 전환 중입니다. 실행 순서는 [`TODOLIST.md`](TODOLIST.md)를 따릅니다.
 
 ## 구현 범위
 
@@ -46,6 +46,28 @@ npm
 ```bash
 npm install
 npm run dev
+```
+
+## Supabase 전환
+
+Supabase 전환 순서와 상태는 [`TODOLIST.md`](TODOLIST.md)를 따른다.
+
+로컬 Supabase CLI 명령:
+
+```bash
+npm run supabase:start
+npm run supabase:status
+npm run supabase:reset
+npm run supabase:test
+npm run supabase:lint
+npm run supabase:stop
+```
+
+Hosted project 생성 후 저장소에 실제 key를 기록하지 않고 다음 명령으로 연결한다.
+
+```bash
+npx supabase login
+npx supabase link --project-ref <PROJECT_REF>
 ```
 
 실제 Apps Script API 연결 시 `.env.local`에 배포 URL을 설정합니다.
@@ -98,6 +120,7 @@ components/   공통 UI, AppShell, 리포트와 사람별 일괄 입력 UI
 lib/          타입, 실제 API client, 권한 helper, 사람별 내용 parser
 docs/         요구사항과 설계 문서
 gas-backend/  Google Apps Script Web App 백엔드
+supabase/     Supabase 로컬 설정과 PostgreSQL migration
 ```
 
 ## Apps Script 설정

@@ -59,12 +59,15 @@ Frontend: Next.js App Router
 Language: TypeScript
 UI: Tailwind CSS + shadcn/ui
 Forms: React Hook Form + Zod
-Backend: Google Apps Script Web App
-Database: Google Sheets
-File Storage: Google Drive
-Auth: Google OAuth
+Backend: Supabase PostgreSQL + Next.js server routes
+Database: Supabase PostgreSQL
+File Storage: Supabase Storage
+Auth: Supabase Auth + Google OAuth
 Deploy: Vercel
 ```
+
+Google Apps Script와 Google Sheets 코드는 Supabase 전환 완료 전까지 레거시 런타임으로 유지한다.
+새 기능은 Supabase 전환 계획인 `TODOLIST.md`를 우선 따른다.
 
 ---
 

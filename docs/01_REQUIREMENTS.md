@@ -597,7 +597,8 @@ N개월 이상 출석 기록이 없는 성도를 장기결석자로 표시한다
 
 ## 5. 데이터베이스 요구사항
 
-Google Sheets를 1차 DB로 사용한다.
+Supabase PostgreSQL을 운영 DB로 사용한다.
+기존 Google Sheets 데이터는 전환 시 일회성 import 대상으로 사용하고 이후 읽기 전용 백업으로 보관한다.
 
 필수 시트는 다음과 같다.
 
@@ -633,18 +634,20 @@ audit_logs
 
 ### Backend
 
-* Google Apps Script Web App API
+* Supabase PostgreSQL
+* Next.js server routes
 
 ### Database
 
-* Google Sheets
+* Supabase PostgreSQL
 
 ### File Storage
 
-* Google Drive
+* Supabase Storage
 
 ### Auth
 
+* Supabase Auth
 * Google OAuth
 
 ### Deployment
@@ -683,16 +686,17 @@ audit_logs
 
 본 시스템은 성도, Admin, 셀리더, 셀 수가 늘어날 수 있음을 전제로 한다.
 
-초기 버전은 Google Sheets 기반으로 구현하되, 데이터 증가에 따라 조회 성능이 저하될 수 있으므로 다음 사항을 고려한다.
+Google Sheets 기반 구현의 응답 지연 문제로 Supabase PostgreSQL 전환을 결정했다.
 
 * 성도 목록은 검색, 필터, 페이지네이션을 지원한다.
 * 셀 리포트와 개인 히스토리는 필요한 범위만 조회한다.
 * 장기결석자 계산은 전체 데이터를 매번 과도하게 조회하지 않도록 설계한다.
-* 향후 데이터 규모가 커질 경우 Supabase, Firebase, PostgreSQL 등으로 이전할 수 있도록 타입과 API 계층을 분리한다.
+* 관계 조회와 주요 필터 컬럼에 PostgreSQL 인덱스를 적용한다.
+* 모든 민감 테이블에 RLS를 적용한다.
 
 ## 7.4 백업 가능성
 
-관리자가 Google Sheets 파일과 Google Drive 폴더를 직접 보관하고 백업할 수 있어야 한다.
+관리자가 PostgreSQL 백업을 생성하고 복구 절차를 확인할 수 있어야 한다.
 
 ---
 

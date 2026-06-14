@@ -5,3 +5,14 @@ out/
 .env.local
 *.log
 *.tsbuildinfo
+.omx/
+.codex/*
+!.codex/agents/
+!.codex/agents/**
+!.codex/skills/
+!.codex/skills/**
+.codex/skills/.system/**
+!.codex/prompts/
+!.codex/prompts/**
+supabase/.branches/
+supabase/.temp/
