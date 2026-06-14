@@ -444,9 +444,9 @@ Users, Cells, Newcomers 관리 API는 주요 변경을 `audit_logs`에 기록한
 
 # 18. Phase 5 로그인 세션과 비밀값
 
-Google OAuth client secret, `AUTH_SECRET`, `GAS_PROXY_SECRET`은 서버 환경변수와 Apps Script Script Properties에만 저장하며 저장소와 브라우저에 노출하지 않는다.
+Google OAuth client secret과 `SUPABASE_SECRET_KEY`는 Supabase 또는 서버 환경변수에만 저장하며 저장소와 브라우저에 노출하지 않는다.
 
-Auth.js 로그인 세션은 암호화된 HttpOnly JWT cookie를 사용하며 기본 유효시간은 8시간이다. 세션에는 앱 접근에 필요한 검증된 사용자 ID, 이메일, 이름, roles, 배정 셀 정보만 포함한다. Google access token과 refresh token은 앱 세션에 저장하거나 클라이언트에 전달하지 않는다.
+Supabase Auth 로그인 세션은 HttpOnly cookie로 관리한다. 앱은 Google access token과 refresh token을 직접 저장하거나 클라이언트 API payload에 전달하지 않는다.
 
 보호 API 요청의 이메일은 브라우저 입력값이 아니라 서버 세션에서 가져온다.
 
@@ -460,5 +460,16 @@ Auth.js 로그인 세션은 암호화된 HttpOnly JWT cookie를 사용하며 기
 공개 새신자 제출은 Next.js 서버 Route Handler에서 필수값, 개인정보 동의, 요청 크기와 rate
 limit을 검증한 뒤 서버 전용 secret key로 저장한다. 응답에는 생성 ID, 상태, 제출 시각 외의
 입력 개인정보를 반환하지 않는다.
+
+---
+
+# 20. 성도 CSV 일괄 등록
+
+성도 CSV 파일은 등록 요청 처리 목적으로만 브라우저와 Next.js 서버 메모리에서 사용하며 Storage,
+저장소, 서버 로그에 보관하지 않는다. 등록 전 미리보기에는 이름, 셀, 상태, 별칭 수만 표시하고
+연락처, 주소, 직장, 가족정보, 메모는 표시하지 않는다.
+
+서버는 CSV 전체를 검증한 뒤 하나의 DB 트랜잭션으로 저장한다. 오류 메시지에는 행 번호와 필드
+규칙만 포함하며 입력된 개인정보 원문을 포함하지 않는다.
 
 ---

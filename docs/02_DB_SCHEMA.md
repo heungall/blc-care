@@ -927,6 +927,11 @@ RLS helper는 `current_app_user_id()`, `is_admin()`, `can_access_cell()`,
 `can_access_member()`, `can_edit_report()`를 제공한다. 실제 데이터 반입 전
 `supabase/tests/database/initial_schema_rls.test.sql`을 반드시 통과해야 한다.
 
+`import_members_csv(jsonb, text)` RPC는 Admin CSV Route Handler가 검증한 최대 500개 성도 행을
+하나의 트랜잭션으로 등록한다. UUID는 DB 기본값으로 생성하며, 활성 셀 이름이 제공되면
+`members.current_cell_id`와 최초 `cell_member_history`를 함께 기록한다. RPC 실행 권한은
+`service_role`에만 부여한다.
+
 ---
 
 # 21. Phase 2 TypeScript 매핑

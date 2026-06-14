@@ -18,15 +18,15 @@ import type {
   Role,
 } from "@/lib/types";
 
-type GasError = {
+type ApiResponseError = {
   code: string;
   message: string;
 };
 
-type GasResponse<T> = {
+type ApiResponse<T> = {
   success: boolean;
   data: T | null;
-  error: GasError | null;
+  error: ApiResponseError | null;
 };
 
 export type VerifiedUser = User & {
@@ -114,25 +114,23 @@ export function getApiErrorMessage(error: unknown) {
   return friendlyMessages.INTERNAL_ERROR;
 }
 
-async function gasRequest<T>(
+async function supabaseRequest<T>(
   action: string,
-  email = "",
   data: Record<string, unknown> = {},
 ): Promise<T> {
-  const response = await fetch("/api/gas", {
+  const response = await fetch("/api/supabase", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       action,
-      requestUser: { email },
       data,
     }),
     cache: "no-store",
   });
 
-  let payload: GasResponse<T>;
+  let payload: ApiResponse<T>;
   try {
-    payload = (await response.json()) as GasResponse<T>;
+    payload = (await response.json()) as ApiResponse<T>;
   } catch {
     throw new ApiError("NETWORK_ERROR", friendlyMessages.NETWORK_ERROR);
   }
@@ -148,65 +146,78 @@ async function gasRequest<T>(
 
 export const api = {
   verifyUser: async (email: string) => {
-    const user = await gasRequest<VerifiedUser>("verifyUser", email);
+    void email;
+    const user = await supabaseRequest<VerifiedUser>("verifyUser");
     return { ...user, created_at: user.created_at ?? "", updated_at: user.updated_at ?? "" };
   },
-  getCells: async (user: User) => (await gasRequest<{ items: Cell[] }>("getCells", user.email)).items,
+  getCells: async (user: User) => {
+    void user;
+    return (await supabaseRequest<{ items: Cell[] }>("getCells")).items;
+  },
   getMembers: async (user: User, data: Record<string, unknown> = {}) =>
-    (await gasRequest<{ items: MemberView[] }>("getMembers", user.email, data)).items,
+    (await supabaseRequest<{ items: MemberView[] }>("getMembers", data)).items,
   getMemberDetail: (user: User, memberId: string) =>
-    gasRequest<MemberDetail>("getMemberDetail", user.email, { member_id: memberId }),
+    supabaseRequest<MemberDetail>("getMemberDetail", { member_id: memberId }),
   getReports: async (user: User, data: Record<string, unknown> = {}) =>
-    (await gasRequest<{ items: ReportListItem[] }>("getReports", user.email, data)).items,
+    (await supabaseRequest<{ items: ReportListItem[] }>("getReports", data)).items,
   getReportDetail: (user: User, reportId: string) =>
-    gasRequest<ReportDetail>("getReportDetail", user.email, { report_id: reportId }),
+    supabaseRequest<ReportDetail>("getReportDetail", { report_id: reportId }),
   getWeeklyReportDraft: (user: User, cellId: string, weekStartDate?: string) =>
-    gasRequest<WeeklyReportDraft>("getWeeklyReportDraft", user.email, {
+    supabaseRequest<WeeklyReportDraft>("getWeeklyReportDraft", {
       cell_id: cellId,
       week_start_date: weekStartDate,
     }),
   saveWeeklyReport: (user: User, payload: SaveReportPayload) =>
-    gasRequest<ReportDetail>("saveWeeklyReport", user.email, payload as unknown as Record<string, unknown>),
+    supabaseRequest<ReportDetail>("saveWeeklyReport", payload as unknown as Record<string, unknown>),
   parsePrayerRequests: (user: User, cellId: string, rawText: string) =>
-    gasRequest<PrayerParseResult>("parsePrayerRequests", user.email, { cell_id: cellId, raw_text: rawText }),
+    supabaseRequest<PrayerParseResult>("parsePrayerRequests", { cell_id: cellId, raw_text: rawText }),
   submitNewcomer: (values: NewcomerFormValues) =>
-    gasRequest<{ newcomer_id: string; status: NewcomerStatus; submitted_at: string }>("createNewcomer", "", values),
+    supabaseRequest<{ newcomer_id: string; status: NewcomerStatus; submitted_at: string }>("createNewcomer", values),
   getNewcomers: async (user: User, data: Record<string, unknown> = {}) =>
-    (await gasRequest<{ items: Newcomer[] }>("getNewcomers", user.email, data)).items,
+    (await supabaseRequest<{ items: Newcomer[] }>("getNewcomers", data)).items,
   updateNewcomer: (user: User, newcomerId: string, status: NewcomerStatus, adminMemo: string) =>
-    gasRequest<Newcomer>("updateNewcomerStatus", user.email, {
+    supabaseRequest<Newcomer>("updateNewcomerStatus", {
       newcomer_id: newcomerId,
       status,
       admin_memo: adminMemo,
     }),
   convertNewcomer: (user: User, newcomerId: string, cellId: string) =>
-    gasRequest<{ newcomer: Newcomer; member: Member; cell_member_history_id: string }>(
+    supabaseRequest<{ newcomer: Newcomer; member: Member; cell_member_history_id: string }>(
       "convertNewcomerToMember",
-      user.email,
       { newcomer_id: newcomerId, cell_id: cellId },
     ),
-  getUsers: async (user: User) => (await gasRequest<{ items: ManagedUser[] }>("getUsers", user.email)).items,
+  getUsers: async (user: User) => {
+    void user;
+    return (await supabaseRequest<{ items: ManagedUser[] }>("getUsers")).items;
+  },
   createUser: (user: User, data: { name: string; email: string; roles: Role[]; active?: boolean }) =>
-    gasRequest<ManagedUser>("createUser", user.email, data),
+    supabaseRequest<ManagedUser>("createUser", data),
   updateUser: (user: User, data: { user_id: string; name: string; email: string; roles: Role[]; active: boolean }) =>
-    gasRequest<ManagedUser>("updateUser", user.email, data),
+    supabaseRequest<ManagedUser>("updateUser", data),
   assignUserToCell: (user: User, userId: string, cellId: string, assignmentRole: AssignmentRole) =>
-    gasRequest("assignUserToCell", user.email, { user_id: userId, cell_id: cellId, assignment_role: assignmentRole }),
+    supabaseRequest("assignUserToCell", { user_id: userId, cell_id: cellId, assignment_role: assignmentRole }),
   unassignUserFromCell: (user: User, assignmentId: string) =>
-    gasRequest("unassignUserFromCell", user.email, { assignment_id: assignmentId }),
+    supabaseRequest("unassignUserFromCell", { assignment_id: assignmentId }),
   createCell: (user: User, cellName: string) =>
-    gasRequest<Cell>("createCell", user.email, { cell_name: cellName }),
+    supabaseRequest<Cell>("createCell", { cell_name: cellName }),
   updateCell: (user: User, cell: Cell) =>
-    gasRequest<Cell>("updateCell", user.email, cell as unknown as Record<string, unknown>),
-  getAbsenceAlerts: async (user: User) =>
-    (await gasRequest<{ items: AbsenceAlert[] }>("getAbsenceAlerts", user.email)).items,
+    supabaseRequest<Cell>("updateCell", cell as unknown as Record<string, unknown>),
+  getAbsenceAlerts: async (user: User) => {
+    void user;
+    return (await supabaseRequest<{ items: AbsenceAlert[] }>("getAbsenceAlerts")).items;
+  },
   updateAbsenceAlert: (user: User, alertId: string, status: AbsenceAlertStatus, memo: string) =>
-    gasRequest<AbsenceAlert>("updateAbsenceAlert", user.email, { alert_id: alertId, status, memo }),
-  getSettings: (user: User) => gasRequest<AppSettings>("getSettings", user.email),
+    supabaseRequest<AbsenceAlert>("updateAbsenceAlert", { alert_id: alertId, status, memo }),
+  getSettings: (user: User) => {
+    void user;
+    return supabaseRequest<AppSettings>("getSettings");
+  },
   updateSettings: (user: User, settings: AppSettings) =>
-    gasRequest<AppSettings>("updateSettings", user.email, settings as unknown as Record<string, unknown>),
-  getBackupHistory: async (user: User) =>
-    (await gasRequest<{ items: BackupHistory[] }>("getBackupHistory", user.email)).items,
+    supabaseRequest<AppSettings>("updateSettings", settings as unknown as Record<string, unknown>),
+  getBackupHistory: async (user: User) => {
+    void user;
+    return (await supabaseRequest<{ items: BackupHistory[] }>("getBackupHistory")).items;
+  },
   createBackup: (user: User, format: "CSV" | "XLSX") =>
-    gasRequest<BackupHistory>("createBackup", user.email, { format }),
+    supabaseRequest<BackupHistory>("createBackup", { format }),
 };

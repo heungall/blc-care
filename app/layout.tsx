@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { auth } from "@/auth";
 import { AuthProvider } from "@/components/auth-provider";
+import { getCurrentAppUser } from "@/lib/supabase/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const session = await auth();
+  const user = await getCurrentAppUser();
   return (
     <html lang="ko">
       <body>
-        <AuthProvider session={session}>{children}</AuthProvider>
+        <AuthProvider user={user}>{children}</AuthProvider>
       </body>
     </html>
   );

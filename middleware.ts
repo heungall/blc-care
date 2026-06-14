@@ -1,22 +1,25 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { canAccessAdminPages } from "@/lib/auth";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-export default auth((request) => {
-  const appUser = request.auth?.user.blcUser;
-  if (!appUser) {
-    const loginUrl = new URL("/login", request.nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  if (
-    request.nextUrl.pathname.startsWith("/admin") &&
-    !canAccessAdminPages(appUser)
-  ) {
-    return NextResponse.redirect(new URL("/dashboard?error=forbidden", request.nextUrl.origin));
-  }
-});
+export default async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (items) => {
+          items.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          items.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        },
+      },
+    },
+  );
+  await supabase.auth.getUser();
+  return response;
+}
 
 export const config = {
   matcher: ["/dashboard/:path*", "/members/:path*", "/reports/:path*", "/admin/:path*"],

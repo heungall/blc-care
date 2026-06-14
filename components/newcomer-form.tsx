@@ -108,7 +108,7 @@ export function NewcomerForm() {
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>등록 내용 제출</Button>
       {errors.root?.message && <p className="rounded-xl bg-rose-50 p-3 text-center text-sm text-rose-700">{errors.root.message}</p>}
-      <p className="text-center text-xs text-slate-400">제출 내용은 Apps Script API를 통해 저장됩니다.</p>
+      <p className="text-center text-xs text-slate-400">제출 내용은 Supabase에 안전하게 저장됩니다.</p>
     </form>
   );
 }

@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
-import { auth, signIn } from "@/auth";
+import { headers } from "next/headers";
 import { Badge, Button, Card, LinkButton } from "@/components/ui";
 import { getRoleHome } from "@/lib/auth";
+import { getCurrentAppUser } from "@/lib/supabase/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const errorMessages: Record<string, string> = {
   unregistered: "등록되지 않은 계정입니다. 관리자에게 문의해주세요.",
@@ -16,10 +18,8 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const session = await auth();
-  if (session?.user.blcUser) {
-    redirect(getRoleHome(session.user.blcUser));
-  }
+  const user = await getCurrentAppUser();
+  if (user) redirect(getRoleHome(user));
   const { error } = await searchParams;
 
   return (
@@ -39,7 +39,16 @@ export default async function LoginPage({
           className="mt-7"
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: "/auth/after-login" });
+            const supabase = await createSupabaseServerClient();
+            const requestHeaders = await headers();
+            const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host");
+            const protocol = requestHeaders.get("x-forwarded-proto") || "http";
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+            const { data } = await supabase.auth.signInWithOAuth({
+              provider: "google",
+              options: { redirectTo: `${siteUrl}/auth/callback` },
+            });
+            if (data.url) redirect(data.url);
           }}
         >
           <Button type="submit" className="w-full">Google 계정으로 로그인</Button>

@@ -35,13 +35,14 @@
 
 ## 3. Supabase Auth 및 API 전환
 
-- [ ] `@supabase/supabase-js`, `@supabase/ssr` 설치
-- [ ] Supabase Google OAuth 설정
-- [ ] 브라우저 / 서버 Supabase client 구성
-- [ ] 기존 Auth.js 및 `/api/gas` 의존성 제거
-- [ ] `lib/api.ts`를 Supabase query / RPC 기반으로 교체
-- [ ] Members, Reports, Newcomers, Admin 기능을 Supabase로 연결
-- [ ] 복합 저장 작업을 PostgreSQL 함수 또는 서버 Route Handler로 구현
+- [x] `@supabase/supabase-js`, `@supabase/ssr` 설치
+- [x] Supabase Google OAuth 설정
+- [x] 브라우저 / 서버 Supabase client 구성
+- [x] 기존 Auth.js 및 `/api/gas` 의존성 제거
+- [x] `lib/api.ts`를 Supabase query / Route Handler 기반으로 교체
+- [x] Members, Reports, Newcomers, Admin 기능을 Supabase로 연결
+- [x] 복합 저장 작업을 PostgreSQL 함수 또는 서버 Route Handler로 구현
+- [x] Admin 성도 CSV 일괄 등록 Route Handler와 트랜잭션 RPC 구현
 
 ## 4. Storage, 백업 및 운영 기능 전환
 

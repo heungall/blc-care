@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { getRoleHome } from "@/lib/auth";
+import { getCurrentAppUser } from "@/lib/supabase/auth";
 
 export default async function AfterLoginPage() {
-  const session = await auth();
-  if (!session?.user.blcUser) {
-    redirect(`/login?error=${session?.authError ?? "server"}`);
-  }
-  redirect(getRoleHome(session.user.blcUser));
+  const user = await getCurrentAppUser();
+  if (!user) redirect("/login?error=unregistered");
+  redirect(getRoleHome(user));
 }

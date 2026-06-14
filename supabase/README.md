@@ -37,3 +37,32 @@ npm run supabase:lint
 
 공개 새신자 제출은 `anon` 역할에 `newcomers` 직접 쓰기 권한을 주지 않는다. 후속 Next.js
 Route Handler가 입력값, 개인정보 동의, rate limit을 검증한 뒤 서버 전용 secret key로 저장한다.
+
+## 12개 테이블 샘플 데이터
+
+`supabase/examples/sample-data.sql`은 모든 앱 테이블에 데이터가 어떤 형태로 들어가는지 보여주는
+참고용 SQL이다. 실제 개인정보를 포함하지 않으며 migration이나 `db push`에서 자동 실행되지 않는다.
+
+샘플이 보여주는 주요 형식:
+
+```txt
+ID 관계          UUID
+roles            text[] 예: array['admin', 'cell_leader']
+name_aliases     text[] 예: array['길동', '길동형제']
+날짜             'YYYY-MM-DD'
+시간             'YYYY-MM-DD HH:mm:ss+09'
+상태값           migration에 정의된 enum 값
+audit 값         개인정보 원문이 없는 jsonb
+```
+
+Supabase Dashboard의 SQL Editor에서 내용을 검토한 뒤 실행할 수 있다. 운영 DB에 불필요한 샘플
+데이터를 넣지 않도록 기본 seed 파일과 migration에는 연결하지 않는다.
+
+## Admin 성도 CSV 일괄 등록
+
+`202606140002_member_csv_import.sql`은 `/admin/members/import` 화면에서 사용하는
+`import_members_csv` RPC를 생성한다. RPC는 `service_role`만 실행할 수 있고, 최대 500명의
+성도와 최초 셀 이력 및 최소 audit log를 하나의 트랜잭션으로 저장한다.
+
+CSV 파일은 앱에서 템플릿을 내려받아 작성한다. 실제 CSV와 개인정보는 저장소나 Storage에
+보관하지 않는다.

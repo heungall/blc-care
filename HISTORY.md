@@ -933,3 +933,102 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 * Docker 사용 가능한 환경에서 pgTAP RLS 테스트 28개 실행
 * Supabase browser/server client 구성
 * 공개 새신자 제출용 Next.js Route Handler 구현
+
+---
+
+## 2026-06-14 - Supabase 12개 테이블 샘플 데이터
+
+### Summary
+
+* 12개 앱 테이블의 UUID, 외래키, 배열, enum, 날짜, jsonb 형식을 보여주는 참고용 SQL을 추가했다.
+* 샘플은 명시적인 가짜 개인정보와 가짜 돌봄 내용만 사용하며 자동 실행되지 않는다.
+
+### Changed Files
+
+* `supabase/examples/sample-data.sql`
+* `supabase/README.md`
+* `HISTORY.md`
+
+### Reason
+
+* Supabase Table Editor와 SQL Editor에서 각 테이블에 데이터를 어떤 형식으로 입력해야 하는지 쉽게 확인하기 위함.
+
+### Checks
+
+* 12개 앱 테이블 insert 구문 포함 확인
+* 외래키 입력 순서 및 migration 제약조건 정적 확인
+* `git diff --check` - 통과
+
+### TODO
+
+* 실제 데이터 반입 전 CSV dry-run 검증 및 UUID 매핑 import 도구 구현
+
+---
+
+## 2026-06-14 - Admin 성도 CSV 일괄 등록
+
+### Summary
+
+* Admin이 CSV 템플릿을 내려받고 최대 500명의 성도를 검증·확인 후 일괄 등록하는 화면을 추가했다.
+* 서버 Route Handler가 Admin 세션과 CSV를 재검증하고 Supabase secret을 브라우저에 노출하지 않도록 했다.
+* service-role 전용 PostgreSQL RPC가 UUID 생성, 성도, 최초 셀 이력, 최소 audit log를 하나의 트랜잭션으로 저장한다.
+* CSV 미리보기와 오류 메시지에서 민감정보 원문을 제외했다.
+
+### Changed Files
+
+* `app/(protected)/admin/members/import/page.tsx`
+* `app/api/admin/members/import/route.ts`
+* `components/app-shell.tsx`
+* `lib/member-csv.ts`
+* `lib/member-csv.test.ts`
+* `lib/supabase-server.ts`
+* `supabase/migrations/202606140002_member_csv_import.sql`
+* `supabase/tests/database/member_csv_import.test.sql`
+* 관련 요구사항, 스키마, 화면, API, 권한, 개인정보, Supabase 문서
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 성도 데이터를 Table Editor에서 한 명씩 입력하지 않고 앱에서 안전하게 대량 등록하기 위함.
+
+### Checks
+
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 38개 테스트 통과
+* `git diff --check` - 통과
+
+### TODO
+
+* hosted Supabase에 CSV import RPC migration 적용
+* Docker 사용 가능한 환경에서 RPC pgTAP 테스트 실행
+
+---
+
+## 2026-06-14 - 앱 런타임 Supabase 전환
+
+### Summary
+
+* Auth.js와 `/api/gas`를 제거하고 Supabase Auth Google OAuth와 `/api/supabase`로 교체했다.
+* Members, Reports, Newcomers, Users, Cells, Absence, Settings 흐름을 Supabase PostgreSQL에 연결했다.
+* 공개 새신자 제출과 Admin 성도 CSV 등록은 서버 전용 secret key 경로를 유지했다.
+* 앱 내 Drive 백업 버튼을 비활성화하고 Supabase Dashboard 백업 안내로 교체했다.
+
+### Changed Files
+
+* `app/api/supabase/route.ts`, `app/auth/*`, 보호 layout과 로그인 화면
+* `lib/api.ts`, `lib/supabase/*`, `middleware.ts`, `components/auth-provider.tsx`
+* Admin 화면 문구, `README.md`, 관련 문서, `TODOLIST.md`
+
+### Checks
+
+* `npm run test` - 38개 테스트 통과
+* `npm run lint` - 통과
+* `npm run build` - 22개 route 생성 완료
+
+### TODO
+
+* Vercel에 `NEXT_PUBLIC_SITE_URL`과 Supabase 환경변수 등록
+* Supabase Auth Redirect URL allow list에 배포 도메인의 `/auth/callback` 등록
+* private Storage 사진 업로드와 앱 내 내보내기 기능 구현

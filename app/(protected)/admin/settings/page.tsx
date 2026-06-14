@@ -25,7 +25,7 @@ export default function AdminSettingsPage() {
   };
 
   return <AdminGuard>
-    <PageHeader title="시스템 설정" description="Google Sheets의 운영 설정을 관리합니다." />
+    <PageHeader title="시스템 설정" description="Supabase의 운영 설정을 관리합니다." />
     {state.loading && <LoadingState />}
     {state.error && <ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState>}
     {state.data && <Card className="max-w-3xl">

@@ -18,6 +18,7 @@ const adminItems = [
   { href: "/admin/newcomers", label: "새신자 관리" },
   { href: "/admin/absence", label: "장기결석자" },
   { href: "/admin/cells", label: "셀 관리" },
+  { href: "/admin/members/import", label: "성도 CSV 등록" },
   { href: "/admin/users", label: "사용자 관리" },
   { href: "/admin/settings", label: "설정" },
   { href: "/admin/backup", label: "백업" },

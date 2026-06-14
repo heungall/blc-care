@@ -64,7 +64,7 @@ export default function AdminUsersPage() {
   };
 
   return <AdminGuard>
-    <PageHeader title="사용자 관리" description="Google Sheets의 사용자 역할과 담당 셀 배정을 관리합니다." />
+    <PageHeader title="사용자 관리" description="Supabase 사용자 역할과 담당 셀 배정을 관리합니다." />
     {state.loading && <LoadingState />}
     {state.error && <ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState>}
     {state.data && <>

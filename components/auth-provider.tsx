@@ -1,8 +1,6 @@
 "use client";
 
-import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { Session } from "next-auth";
 import type { User } from "@/lib/types";
 
 type AuthContextValue = {
@@ -14,17 +12,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children, session }: { children: ReactNode; session: Session | null }) {
-  return (
-    <SessionProvider session={session}>
-      <AuthContextProvider>{children}</AuthContextProvider>
-    </SessionProvider>
-  );
-}
-
-function AuthContextProvider({ children }: { children: ReactNode }) {
-  const { data: session } = useSession();
-  const user = session?.user.blcUser;
+export function AuthProvider({ children, user }: { children: ReactNode; user: User | null }) {
   const [leaderMode, setLeaderMode] = useState(false);
 
   useEffect(() => {
@@ -38,7 +26,10 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
       user,
       leaderMode,
       setLeaderMode,
-      logout: () => signOut({ redirectTo: "/" }),
+      logout: async () => {
+        await fetch("/auth/signout", { method: "POST" });
+        window.location.href = "/";
+      },
     } : null,
     [user, leaderMode],
   );
