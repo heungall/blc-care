@@ -15,6 +15,9 @@ cell_leader
 admin,cell_leader
 ```
 
+Supabase 전환 후 모든 민감 테이블은 Row Level Security(RLS)를 활성화한다.
+프론트엔드 표시 여부와 관계없이 PostgreSQL 정책이 Admin 전체 접근과 셀리더 배정 셀 접근을 강제해야 한다.
+
 ---
 
 # 2. 기본 개념
@@ -604,5 +607,25 @@ admin,cell_leader → /admin/dashboard
 ```
 
 비로그인 사용자가 보호 페이지에 접근하면 `/login`으로 이동한다. `cell_leader`가 `/admin/*`에 접근하면 `/dashboard`로 이동한다. 메뉴 숨김은 편의 기능이며 실제 권한은 서버에서 다시 확인한다.
+
+---
+
+# 17. Supabase RLS 정책
+
+초기 RLS 정책은 `supabase/migrations/202606140001_initial_schema_and_rls.sql`에서 관리한다.
+
+* 활성 `users.auth_user_id = auth.uid()` 매핑만 앱 사용자로 인정한다.
+* Admin은 모든 앱 테이블을 관리할 수 있다.
+* 셀리더는 현재 활성 배정 셀, 해당 셀 성도·리포트·개인 기록·특이사항만 조회한다.
+* 셀리더는 배정 셀의 수정 가능 주차 리포트와 특이사항만 생성·수정한다.
+* Users, Newcomers, Settings, Audit Logs와 장기결석 확인·해결 작업은 Admin 전용이다.
+* 비활성 사용자는 role 값과 관계없이 보호 데이터에 접근할 수 없다.
+* `anon` 역할은 앱 테이블에 직접 접근할 수 없다.
+
+Admin + 셀리더의 화면상 셀리더 모드 필터는 서버 쿼리에서 배정 셀 조건을 추가한다. RLS는 Admin
+권한을 제거하지 않으므로 전체 접근을 허용하는 최종 보안 경계로 동작한다.
+
+공개 새신자 등록은 후속 Next.js Route Handler가 검증 후 서버 전용 secret key로 저장한다.
+브라우저에는 secret key를 노출하지 않고 `newcomers`에 `anon` insert 정책을 추가하지 않는다.
 
 ---

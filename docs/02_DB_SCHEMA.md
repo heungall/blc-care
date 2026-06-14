@@ -4,10 +4,10 @@
 
 본 문서는 BLC Care의 1차 데이터베이스 구조를 정의한다.
 
-BLC Care는 1차 버전에서 Google Sheets를 데이터베이스처럼 사용한다.
-각 Sheet는 하나의 테이블처럼 사용하며, 각 Row는 하나의 데이터 레코드를 의미한다.
+BLC Care는 Supabase PostgreSQL을 운영 데이터베이스로 사용한다.
+기존 Google Sheets 컬럼 정의는 데이터 반입 매핑 기준으로 유지하며, PostgreSQL migration의 최종 타입, 외래키, 제약조건, 인덱스는 `supabase/migrations/`에서 관리한다.
 
-향후 Supabase, Firebase, PostgreSQL 등으로 이전할 수 있도록 ID 기반 관계형 구조를 유지한다.
+Supabase 전환 시 주요 ID는 UUID를 사용하고, roles와 name aliases는 PostgreSQL 배열로 저장한다.
 
 ---
 
@@ -903,24 +903,36 @@ Admin이 셀리더도 겸임하는 경우:
 
 ---
 
-# 20. 향후 DB 이전 고려사항
+# 20. PostgreSQL 초기 Migration
 
-Google Sheets 기반으로 시작하지만, 추후 데이터가 늘어나면 별도 DB로 이전할 수 있다.
+운영 스키마의 기준은 `supabase/migrations/202606140001_initial_schema_and_rls.sql`이다.
 
-이전을 쉽게 하기 위해 다음 원칙을 지킨다.
+주요 매핑:
 
-* 모든 데이터는 고유 ID를 가진다.
-* 화면에서는 row number에 의존하지 않는다.
-* 관계는 이름이 아니라 ID로 연결한다.
-* 사용자 role과 셀 배정 정보를 분리한다.
-* API 응답 구조는 Google Sheets 내부 구조와 분리한다.
-* 프론트엔드는 Apps Script가 아닌 API 추상화 계층을 통해 데이터를 요청한다.
+```txt
+주요 ID → UUID + gen_random_uuid()
+date → date
+datetime → timestamptz
+roles / name_aliases → text[]
+상태값 → PostgreSQL enum
+audit_logs.before_value / after_value → jsonb
+users.auth_user_id → auth.users.id
+```
+
+Migration은 12개 앱 테이블, 외래키, 유니크·체크 제약, 조회 인덱스, `updated_at` trigger,
+기본 settings 값을 생성한다. 물리 삭제는 기본 운영 흐름에서 사용하지 않으며 외래키도 민감
+데이터의 연쇄 삭제를 막도록 `restrict` 또는 `set null`을 사용한다.
+
+RLS helper는 `current_app_user_id()`, `is_admin()`, `can_access_cell()`,
+`can_access_member()`, `can_edit_report()`를 제공한다. 실제 데이터 반입 전
+`supabase/tests/database/initial_schema_rls.test.sql`을 반드시 통과해야 한다.
 
 ---
 
 # 21. Phase 2 TypeScript 매핑
 
-`lib/types.ts`는 Sheet 행 구조를 기준으로 타입을 정의한다.
+`lib/types.ts`는 현재 레거시 API 응답 구조를 기준으로 타입을 정의한다. Supabase API 전환 시
+PostgreSQL UUID, 배열, enum 타입에 맞춰 갱신한다.
 
 매핑 원칙:
 

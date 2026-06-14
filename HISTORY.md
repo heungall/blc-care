@@ -643,6 +643,57 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 
 ---
 
+## 2026-06-14 - Supabase 전환 1단계 기반 준비
+
+### Summary
+
+* 서비스 중단을 허용하는 Supabase 일괄 전환 계획을 `TODOLIST.md`에 기록했다.
+* Supabase CLI를 개발 의존성으로 설치하고 로컬 실행 스크립트를 추가했다.
+* `supabase/config.toml`, migration 디렉터리, 프로젝트 연결 안내를 추가했다.
+* 환경변수 템플릿과 핵심 요구사항, DB, 권한, 개인정보, 개발 계획 문서를 Supabase 전환 결정에 맞게 동기화했다.
+* 기존 Apps Script 런타임은 Supabase 전환 완료 전까지 유지한다.
+
+### Changed Files
+
+* `TODOLIST.md`
+* `supabase/config.toml`
+* `supabase/migrations/.gitkeep`
+* `supabase/README.md`
+* `.env.example`
+* `.gitignore`
+* `AGENTS.md`
+* `README.md`
+* `docs/01_REQUIREMENTS.md`
+* `docs/02_DB_SCHEMA.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `package.json`
+* `package-lock.json`
+* `HISTORY.md`
+
+### Reason
+
+* Google Apps Script 호출 지연 문제를 해결하고 PostgreSQL 인덱스, 관계형 제약조건, RLS 기반 권한 검증을 적용하기 위함.
+
+### Checks
+
+* Supabase CLI `2.106.0` 실행 확인
+* `npm run supabase:status -- --output json` - config 파싱 후 로컬 Docker daemon 미실행으로 중단
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 34개 테스트 통과
+* `npm run build` - 전체 19개 라우트 생성 완료
+
+### TODO
+
+* Supabase hosted project 생성
+* Project URL, publishable key, secret key를 `.env.local`과 Vercel에 등록
+* CLI로 hosted project link 확인
+* 2단계 PostgreSQL schema와 RLS migration 구현
+
+---
+
 ## 2026-06-12 - Phase 5 Google OAuth 및 role 접근 제어
 
 ### Summary
@@ -802,3 +853,50 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 * 새 Absence / Settings / Backup action을 포함해 Apps Script Web App 새 버전 배포
 * 실제 Google OAuth 세션으로 관리자 Users / Cells / Absence / Settings / Backup 통합 확인
 * `admin,cell_leader` 겸임자의 leaderMode 서버 조회 범위 분리
+
+---
+
+## 2026-06-14 - Supabase 초기 PostgreSQL 스키마 및 RLS
+
+### Summary
+
+* 기존 12개 Sheet 엔티티를 UUID 기반 PostgreSQL 초기 migration으로 변환했다.
+* 외래키, enum/check/unique 제약, 주요 조회 인덱스, `updated_at` trigger와 기본 settings를 추가했다.
+* `auth.users` 매핑과 Admin/셀리더 배정 셀 접근 helper 및 전체 RLS 정책을 구현했다.
+* `anon` 직접 테이블 접근을 차단하고 공개 새신자 제출은 서버 전용 Route Handler를 사용하도록 설계했다.
+* pgTAP 기반 스키마·Admin·셀리더·비활성·익명 권한 테스트 28개를 추가했다.
+
+### Changed Files
+
+* `supabase/migrations/202606140001_initial_schema_and_rls.sql`
+* `supabase/tests/database/initial_schema_rls.test.sql`
+* `supabase/README.md`
+* `package.json`
+* `README.md`
+* `TODOLIST.md`
+* `docs/02_DB_SCHEMA.md`
+* `docs/04_API_SPEC.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `HISTORY.md`
+
+### Reason
+
+* Google Apps Script / Google Sheets 런타임을 Supabase로 일괄 전환하기 위한 운영 데이터 계층과 서버 권한 경계를 먼저 확립하기 위함.
+
+### Checks
+
+* 12개 앱 테이블 및 12개 RLS 활성화 구문 정적 확인 - 통과
+* pgTAP 테스트 정의 28개 정적 확인 - 통과
+* `git diff --check` - 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run test` - 34개 테스트 통과
+* `npm run build` - 전체 19개 라우트 생성 완료, 기존 Auth.js Edge Runtime 경고 유지
+* `npm run supabase:reset`, `npm run supabase:test`, `npm run supabase:lint` - Docker/Postgres 미기동으로 미실행
+
+### TODO
+
+* Docker Desktop 실행 후 Supabase reset, pgTAP RLS 테스트, DB lint 통과 확인
+* hosted Supabase 프로젝트 생성 및 link 후 migration 적용 확인
+* 공개 새신자 제출용 Next.js Route Handler 구현

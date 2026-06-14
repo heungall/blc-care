@@ -9,12 +9,15 @@ BLC Care는 다음 기술 스택을 기준으로 개발한다.
 ```txt
 Frontend: Next.js + TypeScript
 UI: Tailwind CSS + shadcn/ui
-Backend: Google Apps Script Web App
-Database: Google Sheets
-File Storage: Google Drive
-Auth: Google OAuth
+Backend: Supabase PostgreSQL + Next.js server routes
+Database: Supabase PostgreSQL
+File Storage: Supabase Storage
+Auth: Supabase Auth + Google OAuth
 Deploy: Vercel
 ```
+
+2026-06-14부터 Google Apps Script / Google Sheets 런타임을 Supabase로 일괄 전환한다.
+구체적인 실행 순서와 완료 상태는 프로젝트 루트의 `TODOLIST.md`를 기준으로 한다.
 
 ---
 
