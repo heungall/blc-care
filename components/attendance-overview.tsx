@@ -1,23 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import { Badge, Button, Card } from "@/components/ui";
 import type { AttendanceStatus, Member, WeeklyMemberRecord } from "@/lib/types";
 
 const attendanceOptions: Array<{
   value: AttendanceStatus;
   label: string;
+  selectedClassName: string;
 }> = [
-  { value: "present", label: "출석" },
-  { value: "absent", label: "결석" },
-  { value: "excused", label: "사유 결석" },
-  { value: "unknown", label: "미확인" },
+  { value: "present", label: "출석", selectedClassName: "border-green-600 bg-green-600 text-white" },
+  { value: "absent", label: "결석", selectedClassName: "border-rose-600 bg-rose-600 text-white" },
+  { value: "excused", label: "사유 결석", selectedClassName: "border-amber-500 bg-amber-500 text-white" },
+  { value: "unknown", label: "미확인", selectedClassName: "border-slate-500 bg-slate-500 text-white" },
 ];
 
-const statusStyles: Record<AttendanceStatus, string> = {
-  present: "bg-green-100 text-green-700",
-  absent: "bg-rose-100 text-rose-700",
-  excused: "bg-amber-100 text-amber-800",
-  unknown: "bg-slate-100 text-slate-600",
+const memberStatusStyles: Record<AttendanceStatus, string> = {
+  present: "border-green-300 bg-green-50 text-green-800",
+  absent: "border-rose-300 bg-rose-50 text-rose-800",
+  excused: "border-amber-300 bg-amber-50 text-amber-900",
+  unknown: "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
 };
 
 export function AttendanceOverview({
@@ -29,6 +31,7 @@ export function AttendanceOverview({
   records: WeeklyMemberRecord[];
   onChange: (memberId: string, status: AttendanceStatus) => void;
 }) {
+  const [inputMode, setInputMode] = useState<AttendanceStatus>("present");
   const getStatus = (memberId: string) =>
     records.find((record) => record.member_id === memberId)?.attendance_status ?? "unknown";
   const counts = attendanceOptions.reduce<Record<AttendanceStatus, number>>(
@@ -44,7 +47,7 @@ export function AttendanceOverview({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-bold">출결 한눈에 입력</h2>
-          <p className="mt-1 text-sm text-slate-500">출석한 사람만 선택한 뒤, 남은 인원을 결석으로 처리합니다.</p>
+          <p className="mt-1 text-sm text-slate-500">상태를 고른 뒤 명단에서 해당하는 사람들을 연속으로 선택합니다.</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
@@ -76,40 +79,45 @@ export function AttendanceOverview({
         ))}
       </div>
 
-      <div className="mt-5 divide-y divide-slate-100 border-y border-slate-200">
+      <div className="mt-5">
+        <p className="text-sm font-semibold">입력할 상태</p>
+        <div className="mt-2 grid grid-cols-4 gap-1.5 sm:gap-2" role="group" aria-label="출결 입력 상태 선택">
+          {attendanceOptions.map((option) => {
+            const selected = inputMode === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={selected}
+                className={`focus-ring min-h-10 whitespace-nowrap rounded-xl border px-1 py-2 text-xs font-semibold transition sm:px-3 sm:text-sm ${
+                  selected
+                    ? option.selectedClassName
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+                onClick={() => setInputMode(option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" role="group" aria-label="출결 명단">
         {members.map((member) => {
           const status = getStatus(member.member_id);
+          const statusLabel = attendanceOptions.find((option) => option.value === status)?.label;
           return (
-            <div key={member.member_id} className="flex items-center gap-2 py-3">
-              <button
-                type="button"
-                aria-pressed={status === "present"}
-                className={`focus-ring flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border px-3 py-2 text-left transition ${
-                  status === "present"
-                    ? "border-green-300 bg-green-50"
-                    : "border-slate-200 bg-white hover:bg-slate-50"
-                }`}
-                onClick={() => onChange(member.member_id, status === "present" ? "unknown" : "present")}
-              >
-                <span className={`flex size-6 shrink-0 items-center justify-center rounded-md border text-sm font-bold ${
-                  status === "present" ? "border-green-600 bg-green-600 text-white" : "border-slate-300 text-transparent"
-                }`}>
-                  ✓
-                </span>
-                <span className="truncate text-sm font-semibold sm:text-base">{member.display_name}</span>
-                <span className={`ml-auto shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status]}`}>
-                  {attendanceOptions.find((option) => option.value === status)?.label}
-                </span>
-              </button>
-              <select
-                aria-label={`${member.display_name} 출결 상태 직접 변경`}
-                className="focus-ring min-h-11 w-24 shrink-0 rounded-xl border border-slate-300 bg-white px-2 text-xs sm:w-28 sm:text-sm"
-                value={status}
-                onChange={(event) => onChange(member.member_id, event.target.value as AttendanceStatus)}
-              >
-                {attendanceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            </div>
+            <button
+              key={member.member_id}
+              type="button"
+              className={`focus-ring min-h-16 rounded-xl border px-3 py-2 text-left transition ${memberStatusStyles[status]}`}
+              aria-label={`${member.display_name}, 현재 ${statusLabel}, ${attendanceOptions.find((option) => option.value === inputMode)?.label}으로 변경`}
+              onClick={() => onChange(member.member_id, inputMode)}
+            >
+              <span className="block truncate text-sm font-bold sm:text-base">{member.display_name}</span>
+              <span className="mt-1 block text-xs font-semibold opacity-75">{statusLabel}</span>
+            </button>
           );
         })}
       </div>
