@@ -1094,3 +1094,36 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * 실제 셀 인원 규모로 모바일 출결 입력 밀도 사용성 확인
+
+---
+
+## 2026-06-15 - 출석자 중심 한 줄 출결 입력
+
+### Summary
+
+* 출결 한눈에 입력에서 출석한 사람만 빠르게 체크하는 방식으로 변경했다.
+* 미선택 인원은 자동 결석 처리하지 않고 명시적인 버튼으로 결석 처리하도록 했다.
+* 사유 결석과 미확인은 인원별 한 줄 상태 선택에서 직접 변경할 수 있게 유지했다.
+
+### Changed Files
+
+* `components/attendance-overview.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `HISTORY.md`
+
+### Reason
+
+* 출석한 사람 위주로 빠르게 체크하면서도 미선택 인원이 실수로 결석 처리되지 않도록 하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `git diff --check` - 통과
+
+### TODO
+
+* 실제 모바일 화면 폭에서 긴 성도 이름 표시 확인

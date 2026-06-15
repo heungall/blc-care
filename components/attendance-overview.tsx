@@ -6,19 +6,18 @@ import type { AttendanceStatus, Member, WeeklyMemberRecord } from "@/lib/types";
 const attendanceOptions: Array<{
   value: AttendanceStatus;
   label: string;
-  selectedClassName: string;
 }> = [
-  { value: "present", label: "출석", selectedClassName: "border-green-600 bg-green-600 text-white" },
-  { value: "absent", label: "결석", selectedClassName: "border-rose-600 bg-rose-600 text-white" },
-  { value: "excused", label: "사유 결석", selectedClassName: "border-amber-500 bg-amber-500 text-white" },
-  { value: "unknown", label: "미확인", selectedClassName: "border-slate-500 bg-slate-500 text-white" },
+  { value: "present", label: "출석" },
+  { value: "absent", label: "결석" },
+  { value: "excused", label: "사유 결석" },
+  { value: "unknown", label: "미확인" },
 ];
 
-const attendanceLabels: Record<AttendanceStatus, string> = {
-  present: "출석",
-  absent: "결석",
-  excused: "사유 결석",
-  unknown: "미확인",
+const statusStyles: Record<AttendanceStatus, string> = {
+  present: "bg-green-100 text-green-700",
+  absent: "bg-rose-100 text-rose-700",
+  excused: "bg-amber-100 text-amber-800",
+  unknown: "bg-slate-100 text-slate-600",
 };
 
 export function AttendanceOverview({
@@ -45,16 +44,28 @@ export function AttendanceOverview({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-bold">출결 한눈에 입력</h2>
-          <p className="mt-1 text-sm text-slate-500">먼저 전체 인원의 출결을 확인한 뒤 나눔 작성으로 이동합니다.</p>
+          <p className="mt-1 text-sm text-slate-500">출석한 사람만 선택한 뒤, 남은 인원을 결석으로 처리합니다.</p>
         </div>
-        <Button
-          type="button"
-          variant="secondary"
-          className="w-full sm:w-auto"
-          onClick={() => members.forEach((member) => onChange(member.member_id, "present"))}
-        >
-          모두 출석
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full sm:w-auto"
+            onClick={() => members.forEach((member) => onChange(member.member_id, "present"))}
+          >
+            모두 출석
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full sm:w-auto"
+            onClick={() => members.forEach((member) => {
+              if (getStatus(member.member_id) === "unknown") onChange(member.member_id, "absent");
+            })}
+          >
+            미선택 인원 결석 처리
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2" aria-label="출결 현황">
@@ -69,31 +80,35 @@ export function AttendanceOverview({
         {members.map((member) => {
           const status = getStatus(member.member_id);
           return (
-            <div key={member.member_id} className="py-3 sm:grid sm:grid-cols-[minmax(8rem,1fr)_minmax(24rem,2fr)] sm:items-center sm:gap-4">
-              <div className="mb-2 flex items-center justify-between gap-3 sm:mb-0">
-                <span className="font-semibold">{member.display_name}</span>
-                <span className="text-xs text-slate-500 sm:hidden">{attendanceLabels[status]}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label={`${member.display_name} 출결 상태`}>
-                {attendanceOptions.map((option) => {
-                  const selected = status === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={selected}
-                      className={`focus-ring min-h-10 rounded-xl border px-2 py-2 text-sm font-semibold transition ${
-                        selected
-                          ? option.selectedClassName
-                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
-                      onClick={() => onChange(member.member_id, option.value)}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
+            <div key={member.member_id} className="flex items-center gap-2 py-3">
+              <button
+                type="button"
+                aria-pressed={status === "present"}
+                className={`focus-ring flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border px-3 py-2 text-left transition ${
+                  status === "present"
+                    ? "border-green-300 bg-green-50"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
+                }`}
+                onClick={() => onChange(member.member_id, status === "present" ? "unknown" : "present")}
+              >
+                <span className={`flex size-6 shrink-0 items-center justify-center rounded-md border text-sm font-bold ${
+                  status === "present" ? "border-green-600 bg-green-600 text-white" : "border-slate-300 text-transparent"
+                }`}>
+                  ✓
+                </span>
+                <span className="truncate text-sm font-semibold sm:text-base">{member.display_name}</span>
+                <span className={`ml-auto shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status]}`}>
+                  {attendanceOptions.find((option) => option.value === status)?.label}
+                </span>
+              </button>
+              <select
+                aria-label={`${member.display_name} 출결 상태 직접 변경`}
+                className="focus-ring min-h-11 w-24 shrink-0 rounded-xl border border-slate-300 bg-white px-2 text-xs sm:w-28 sm:text-sm"
+                value={status}
+                onChange={(event) => onChange(member.member_id, event.target.value as AttendanceStatus)}
+              >
+                {attendanceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
             </div>
           );
         })}
