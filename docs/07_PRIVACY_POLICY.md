@@ -434,9 +434,11 @@ Admin은 다음 사항을 주의해야 한다.
 
 # 17. Phase 3-5 감사 로그 최소화
 
-Users, Cells, Newcomers 관리 API는 주요 변경을 `audit_logs`에 기록한다.
+Users, Cells, Members, Newcomers 관리 API는 주요 변경을 `audit_logs`에 기록한다.
 
 감사 로그에는 action, target ID, 변경자 ID, 변경 시각과 상태·역할·관련 ID처럼 변경 추적에 필요한 최소 정보만 기록한다. 이름, 이메일, 전화번호, 주소, 방문 동기, 신앙 경험, 관리자 메모 등 개인정보와 민감정보 원문을 `before_value`, `after_value`, `memo`에 복제하지 않는다.
+
+성도 정보 수정 감사 로그에는 변경된 필드 이름과 소속 셀·상태 ID 변화만 기록하며 인적사항 원문은 복제하지 않는다.
 
 새신자 공개 제출 응답은 생성된 ID, 상태, 제출 시각만 반환한다.
 

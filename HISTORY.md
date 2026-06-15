@@ -1193,3 +1193,76 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * 비출석 인원 기록 추가 후 다시 접는 동작 필요 여부 확인
+
+---
+
+## 2026-06-15 - 리포트 제출 후 대시보드 이동
+
+### Summary
+
+* `/reports/new`에서 확인 후 제출이 성공하면 셀리더 대시보드 `/dashboard`로 이동하도록 변경했다.
+* 임시저장은 기존처럼 작성 화면에 머물며 초안을 다시 불러온다.
+* 제출 실패 시 작성 화면에 머물며 오류를 표시한다.
+
+### Changed Files
+
+* `components/report-form.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `HISTORY.md`
+
+### Reason
+
+* 리포트 제출 완료 후 사용자가 대시보드에서 이번 주 리포트 상태를 바로 확인할 수 있도록 하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `git diff --check` - 통과
+
+### TODO
+
+* 브라우저에서 제출 성공 후 대시보드 상태 갱신 확인
+
+---
+
+## 2026-06-15 - Admin 및 셀리더 성도 정보 수정
+
+### Summary
+
+* 성도 상세 화면에 읽기·편집 전환과 성도 정보 수정 폼을 추가했다.
+* Admin은 전체 성도의 기본 정보, 소속 셀, 상태를 수정할 수 있게 했다.
+* 셀리더는 담당 셀 성도의 기본 정보만 수정할 수 있고 소속 셀과 상태 변경은 차단했다.
+* 소속 셀 변경 시 셀 변경 이력을 남기고, 수정 시 개인정보 원문 없는 최소 감사 로그를 기록한다.
+* 기존 성도 상세 화면의 깨진 한글 문구를 정상 문구로 정리했다.
+
+### Changed Files
+
+* `app/(protected)/members/[id]/page.tsx`
+* `app/api/supabase/route.ts`
+* `components/member-edit-form.tsx`
+* `lib/api.ts`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/04_API_SPEC.md`
+* `docs/05_PERMISSION_RULES.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `HISTORY.md`
+
+### Reason
+
+* Admin과 담당 셀리더가 성도 목록에서 상세 화면으로 이동해 최신 성도 정보를 직접 관리할 수 있도록 하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* 실제 Supabase 데이터로 Admin 소속 셀 변경과 셀리더 권한 차단 통합 확인

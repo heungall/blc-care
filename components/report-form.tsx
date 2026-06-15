@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AttendanceOverview } from "@/components/attendance-overview";
 import { MemberContentBulkInput } from "@/components/member-content-bulk-input";
 import { useAuth } from "@/components/auth-provider";
@@ -11,6 +12,7 @@ import { getTodayInTimeZone, getWeekRange } from "@/lib/date";
 import type { WeeklyMemberRecord } from "@/lib/types";
 
 export function ReportForm() {
+  const router = useRouter();
   const { user } = useAuth();
   const cellsState = useApiData(() => api.getCells(user), [user.email]);
   const cells = useMemo(() => cellsState.data ?? [], [cellsState.data]);
@@ -102,7 +104,11 @@ export function ReportForm() {
           };
         }),
       });
-      setMessage(status === "draft" ? "임시저장했습니다." : "리포트를 제출했습니다.");
+      if (status === "submitted") {
+        router.replace("/dashboard");
+        return;
+      }
+      setMessage("임시저장했습니다.");
       void draftState.reload();
     } catch (error) {
       setSaveError(getApiErrorMessage(error));

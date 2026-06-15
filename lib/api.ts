@@ -60,6 +60,30 @@ export type MemberDetail = {
   };
 };
 
+export type UpdateMemberPayload = Pick<Member,
+  | "member_id"
+  | "full_name"
+  | "display_name"
+  | "name_aliases"
+  | "phone"
+  | "birth_date"
+  | "age"
+  | "first_visit_date"
+  | "registration_date"
+  | "address"
+  | "workplace"
+  | "occupation"
+  | "job_title"
+  | "faith_start_year"
+  | "bible_study_status"
+  | "baptism_status"
+  | "family_info"
+  | "memo"
+> & {
+  current_cell_id?: string;
+  status?: Member["status"];
+};
+
 export type ReportDetail = {
   report: ReportListItem;
   records: WeeklyMemberRecord[];
@@ -158,6 +182,8 @@ export const api = {
     (await supabaseRequest<{ items: MemberView[] }>("getMembers", data)).items,
   getMemberDetail: (user: User, memberId: string) =>
     supabaseRequest<MemberDetail>("getMemberDetail", { member_id: memberId }),
+  updateMember: (user: User, payload: UpdateMemberPayload) =>
+    supabaseRequest<Member & { current_cell_name?: string }>("updateMember", payload as unknown as Record<string, unknown>),
   getReports: async (user: User, data: Record<string, unknown> = {}) =>
     (await supabaseRequest<{ items: ReportListItem[] }>("getReports", data)).items,
   getReportDetail: (user: User, reportId: string) =>

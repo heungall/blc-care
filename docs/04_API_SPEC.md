@@ -247,7 +247,35 @@ Apps Script Web App 특성상 클라이언트는 HTTP 상태 코드만 의존하
 }
 ```
 
-## 8. `parsePrayerRequests`
+## 8. `updateMember`
+
+### 8.1 요청과 권한
+
+`POST /api/supabase`의 `updateMember` action으로 성도 정보를 수정한다.
+
+* Admin은 전체 성도의 기본 정보, 소속 셀, 상태를 수정할 수 있다.
+* 셀리더는 현재 활성 배정 셀에 속한 성도의 기본 정보만 수정할 수 있다.
+* 셀리더가 소속 셀 또는 상태를 변경하려 하면 `FORBIDDEN`을 반환한다.
+* 이름과 표시 이름은 필수다.
+* 소속 셀 변경 시 기존 열린 `cell_member_history`를 종료하고 새 이력을 생성한다.
+* 수정 시 `updated_by`를 기록하고 개인정보 원문 없는 최소 `audit_logs`를 생성한다.
+
+```json
+{
+  "action": "updateMember",
+  "data": {
+    "member_id": "member_sample",
+    "full_name": "샘플가온",
+    "display_name": "가온",
+    "name_aliases": ["샘플가온"],
+    "phone": "010-0000-0000",
+    "current_cell_id": "cell_sample",
+    "status": "active"
+  }
+}
+```
+
+## 9. `parsePrayerRequests`
 
 ### 8.1 요청
 

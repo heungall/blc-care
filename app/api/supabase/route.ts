@@ -57,6 +57,8 @@ export async function POST(request: Request) {
         return getMembers(admin, cellIds, data);
       case "getMemberDetail":
         return getMemberDetail(admin, cellIds, requiredString(data.member_id, "member_id"));
+      case "updateMember":
+        return updateMember(admin, user, cellIds, isAdmin, data);
       case "getReports":
         return getReports(admin, cellIds, data);
       case "getReportDetail":
@@ -233,6 +235,87 @@ async function getMemberDetail(admin: any, cellIds: string[] | null, memberId: s
   return success({ member: { ...member, current_cell_name: member.cells?.cell_name, cells: undefined }, history: { records: records ?? [], notes: notes ?? [] } });
 }
 
+async function updateMember(admin: any, user: AppUser, cellIds: string[] | null, isAdmin: boolean, data: Record<string, unknown>) {
+  const memberId = requiredString(data.member_id, "member_id");
+  const { data: existing, error: existingError } = await admin.from("members").select("*").eq("member_id", memberId).single();
+  if (existingError) throw existingError;
+  assertCellAccess(cellIds, existing.current_cell_id);
+
+  const fullName = requiredString(data.full_name, "full_name").trim();
+  const displayName = requiredString(data.display_name, "display_name").trim();
+  if (!fullName || !displayName) throw new ActionError("BAD_REQUEST", "이름과 표시 이름을 입력해주세요.", 400);
+
+  const nextCellId = isAdmin
+    ? requiredString(data.current_cell_id, "current_cell_id")
+    : existing.current_cell_id;
+  const nextStatus = isAdmin ? memberStatus(data.status) : existing.status;
+  if (isAdmin) {
+    const { data: cell, error: cellError } = await admin.from("cells").select("cell_id").eq("cell_id", nextCellId).eq("active", true).single();
+    if (cellError || !cell) throw new ActionError("BAD_REQUEST", "활성 셀을 선택해주세요.", 400);
+  } else if (
+    (typeof data.current_cell_id === "string" && data.current_cell_id !== existing.current_cell_id)
+    || (typeof data.status === "string" && data.status !== existing.status)
+  ) {
+    throw new ActionError("FORBIDDEN", "셀리더는 소속 셀과 성도 상태를 변경할 수 없습니다.", 403);
+  }
+
+  const payload = {
+    full_name: fullName,
+    display_name: displayName,
+    name_aliases: stringArray(data.name_aliases),
+    phone: blankToNull(data.phone),
+    birth_date: dateOrNull(data.birth_date, "birth_date"),
+    age: numberOrNull(data.age, "age", 0, 150),
+    first_visit_date: dateOrNull(data.first_visit_date, "first_visit_date"),
+    registration_date: dateOrNull(data.registration_date, "registration_date"),
+    address: blankToNull(data.address),
+    workplace: blankToNull(data.workplace),
+    occupation: blankToNull(data.occupation),
+    job_title: blankToNull(data.job_title),
+    faith_start_year: numberOrNull(data.faith_start_year, "faith_start_year", 1000, 9999),
+    bible_study_status: optionalEnum(data.bible_study_status, ["unknown", "not_started", "in_progress", "completed"], "bible_study_status"),
+    baptism_status: optionalEnum(data.baptism_status, ["unknown", "not_baptized", "baptized", "infant_baptized", "confirmation"], "baptism_status"),
+    family_info: blankToNull(data.family_info),
+    memo: blankToNull(data.memo),
+    current_cell_id: nextCellId,
+    status: nextStatus,
+    updated_by: user.user_id,
+  };
+  const { data: updated, error: updateError } = await admin.from("members").update(payload).eq("member_id", memberId).select("*, cells:current_cell_id(cell_name)").single();
+  if (updateError) throw updateError;
+
+  if (isAdmin && existing.current_cell_id !== nextCellId) {
+    const today = new Date().toISOString().slice(0, 10);
+    const { error: closeError } = await admin.from("cell_member_history").update({ end_date: today }).eq("member_id", memberId).is("end_date", null);
+    if (closeError) throw closeError;
+    const { error: historyError } = await admin.from("cell_member_history").insert({
+      member_id: memberId,
+      from_cell_id: existing.current_cell_id,
+      to_cell_id: nextCellId,
+      start_date: today,
+      reason: "member profile update",
+      changed_by: user.user_id,
+    });
+    if (historyError) throw historyError;
+  }
+
+  const changedFields = Object.keys(payload).filter((key) =>
+    key !== "updated_by" && JSON.stringify(existing[key]) !== JSON.stringify(payload[key as keyof typeof payload]),
+  );
+  const { error: auditError } = await admin.from("audit_logs").insert({
+    action: "update",
+    target_type: "member",
+    target_id: memberId,
+    changed_by: user.user_id,
+    before_value: { current_cell_id: existing.current_cell_id, status: existing.status },
+    after_value: { current_cell_id: nextCellId, status: nextStatus, changed_fields: changedFields },
+    memo: "member profile updated",
+  });
+  if (auditError) throw auditError;
+
+  return success({ ...updated, current_cell_name: updated.cells?.cell_name, cells: undefined });
+}
+
 async function getReports(admin: any, cellIds: string[] | null, data: Record<string, unknown>) {
   let query = admin.from("weekly_cell_reports").select("*, cells(cell_name), users:leader_user_id(name)").order("week_start_date", { ascending: false });
   if (cellIds) query = query.in("cell_id", cellIds);
@@ -382,6 +465,34 @@ function requiredString(value: unknown, name: string) {
 
 function blankToNull(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function stringArray(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean))];
+}
+
+function dateOrNull(value: unknown, name: string) {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new ActionError("BAD_REQUEST", `${name} 형식을 확인해주세요.`, 400);
+  return value;
+}
+
+function numberOrNull(value: unknown, name: string, min: number, max: number) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(number) || number < min || number > max) throw new ActionError("BAD_REQUEST", `${name} 값을 확인해주세요.`, 400);
+  return number;
+}
+
+function optionalEnum(value: unknown, allowed: string[], name: string) {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string" || !allowed.includes(value)) throw new ActionError("BAD_REQUEST", `${name} 값을 확인해주세요.`, 400);
+  return value;
+}
+
+function memberStatus(value: unknown) {
+  return optionalEnum(value, ["active", "dormant", "left", "archived"], "status") ?? "active";
 }
 
 function dateInRange(start: string, end: string) {
