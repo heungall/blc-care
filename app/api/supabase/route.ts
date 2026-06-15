@@ -341,9 +341,17 @@ async function getReportDetail(admin: any, cellIds: string[] | null, reportId: s
   const list = await responseData(await getReports(admin, cellIds, {})) as { items: any[] };
   const report = list.items.find((item) => item.report_id === reportId);
   if (!report) throw new ActionError("NOT_FOUND", "리포트를 찾을 수 없습니다.", 404);
-  const { data: records, error } = await admin.from("weekly_member_records").select("*").eq("report_id", reportId).order("member_id");
+  const { data: records, error } = await admin.from("weekly_member_records").select("*, members:member_id(display_name,full_name)").eq("report_id", reportId).order("member_id");
   if (error) throw error;
-  return success({ report, records: records ?? [], can_edit: isAdmin || (!report.locked && report.status !== "locked" && dateInRange(report.week_start_date, report.week_end_date)) });
+  return success({
+    report,
+    records: (records ?? []).map((record: any) => ({
+      ...record,
+      member_display_name: record.members?.display_name ?? record.members?.full_name ?? "이름 미확인",
+      members: undefined,
+    })),
+    can_edit: isAdmin || (!report.locked && report.status !== "locked" && dateInRange(report.week_start_date, report.week_end_date)),
+  });
 }
 
 async function getWeeklyReportDraft(admin: any, user: AppUser, cellIds: string[] | null, data: Record<string, unknown>) {

@@ -1303,3 +1303,36 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * 실제 모바일 기기에서 통화 앱 연결과 긴 이름·연락처 표시 확인
+
+---
+
+## 2026-06-15 - 리포트 상세 성도 이름 표시
+
+### Summary
+
+* 주차별 리포트 상세의 인원별 기록 제목에 UUID 대신 성도 표시 이름을 보여주도록 수정했다.
+* `getReportDetail` 응답에 권한 검증된 성도 표시 이름을 결합했다.
+
+### Changed Files
+
+* `app/(protected)/reports/[id]/page.tsx`
+* `app/api/supabase/route.ts`
+* `lib/api.ts`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/04_API_SPEC.md`
+* `HISTORY.md`
+
+### Reason
+
+* 리포트 상세 화면에서 내부 UUID가 사용자에게 노출되는 문제를 해결하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `npm.cmd run build` - 타입 검사 포함 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* 기존 리포트와 신규 리포트 상세에서 성도 이름 표시 확인

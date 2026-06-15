@@ -86,7 +86,7 @@ export type UpdateMemberPayload = Pick<Member,
 
 export type ReportDetail = {
   report: ReportListItem;
-  records: WeeklyMemberRecord[];
+  records: Array<WeeklyMemberRecord & { member_display_name: string }>;
   can_edit: boolean;
 };
 

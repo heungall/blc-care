@@ -347,6 +347,7 @@ Apps Script Web App 특성상 클라이언트는 HTTP 상태 코드만 의존하
 ```
 
 응답은 `report`, 해당 리포트의 `records`, 요청 사용자의 `can_edit` 여부를 반환한다.
+각 개인 기록에는 화면 표시용 `member_display_name`을 포함하며 UUID는 사용자 화면의 이름 제목으로 표시하지 않는다.
 
 ## 11. `getWeeklyReportDraft`
 

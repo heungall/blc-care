@@ -10,12 +10,14 @@ import { useApiData } from "@/hooks/use-api-data";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { AttendanceStatus, WeeklyMemberRecord } from "@/lib/types";
 
+type ReportMemberRecord = WeeklyMemberRecord & { member_display_name: string };
+
 export default function ReportDetailPage() {
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
   const state = useApiData(() => api.getReportDetail(user, params.id), [user.email, params.id]);
   const [summary, setSummary] = useState("");
-  const [records, setRecords] = useState<WeeklyMemberRecord[]>([]);
+  const [records, setRecords] = useState<ReportMemberRecord[]>([]);
   const [message, setMessage] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -74,7 +76,7 @@ export default function ReportDetailPage() {
         <div className="mt-4 space-y-4">
           {records.length ? records.map((record) => (
             <Card key={record.record_id || record.member_id}>
-              <h3 className="font-bold">{record.member_id}</h3>
+              <h3 className="font-bold">{record.member_display_name}</h3>
               <label className="mt-4 block text-sm font-semibold">출석 상태<Select className="mt-2" value={record.attendance_status} disabled={!editable} onChange={(event) => updateRecord(record.member_id, { attendance_status: event.target.value as AttendanceStatus })}><option value="unknown">미확인</option><option value="present">출석</option><option value="absent">결석</option><option value="excused">사유 결석</option></Select></label>
               <label className="mt-4 block text-sm font-semibold">개인 나눔 요약<Textarea className="mt-2 min-h-20" value={record.sharing_summary ?? ""} disabled={!editable} onChange={(event) => updateRecord(record.member_id, { sharing_summary: event.target.value })} /></label>
               <label className="mt-4 block text-sm font-semibold">기도제목<Textarea className="mt-2 min-h-20" value={record.prayer_request ?? ""} disabled={!editable} onChange={(event) => updateRecord(record.member_id, { prayer_request: event.target.value })} /></label>
