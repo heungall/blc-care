@@ -1058,3 +1058,39 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * Vercel 배포 도메인의 `/auth/callback`을 Supabase Redirect URL allow list에 등록하고 실제 로그인 검증
+
+---
+
+## 2026-06-15 - 주간 리포트 출결 우선 작성 흐름
+
+### Summary
+
+* `/reports/new`를 출결 입력과 나눔 작성의 2단계 흐름으로 변경했다.
+* 전체 인원의 출결을 촘촘한 목록에서 선택하고 현황을 즉시 확인할 수 있게 했다.
+* 모두 출석 일괄 선택과 나눔 작성 단계의 출결 결과 요약 및 출결 수정 이동을 추가했다.
+* 기존 리포트 상세 수정 화면은 인원별 출결·나눔 수정 흐름을 유지했다.
+
+### Changed Files
+
+* `components/attendance-overview.tsx`
+* `components/report-form.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `HISTORY.md`
+
+### Reason
+
+* 최초 리포트 작성 시 성도별 긴 카드를 스크롤하며 출결을 입력하는 부담을 줄이기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료, 기존 Supabase Edge Runtime 경고 유지
+* `git diff --check` - 통과
+
+### TODO
+
+* 실제 셀 인원 규모로 모바일 출결 입력 밀도 사용성 확인
