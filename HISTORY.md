@@ -1266,3 +1266,40 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * 실제 Supabase 데이터로 Admin 소속 셀 변경과 셀리더 권한 차단 통합 확인
+
+---
+
+## 2026-06-15 - 성도 상세 요약 및 모바일 통화
+
+### Summary
+
+* 성도 상세 읽기 화면을 핵심 정보 요약 중심으로 재구성했다.
+* 연락처, 직장·직업, 등록일, 최근 출석일, 신앙 상태만 기본 표시하도록 했다.
+* 나머지 인적사항과 관리 메모는 `전체 정보 보기`에서 펼쳐 확인하도록 변경했다.
+* 연락처 옆 통화 버튼을 `tel:` 링크로 연결해 모바일 전화 앱을 열 수 있게 했다.
+* 상세 화면에 남아 있던 깨진 한글 문구를 정상 문구로 정리했다.
+
+### Changed Files
+
+* `app/(protected)/members/[id]/page.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `HISTORY.md`
+
+### Reason
+
+* 성도 상세 정보를 긴 목록으로 나열하지 않고 자주 필요한 정보만 빠르게 확인하며, 모바일에서 연락을 바로 시도할 수 있도록 하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 빌드 완료 후 재실행 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* 실제 모바일 기기에서 통화 앱 연결과 긴 이름·연락처 표시 확인
