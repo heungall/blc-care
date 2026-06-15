@@ -16,10 +16,17 @@ const attendanceOptions: Array<{
 ];
 
 const memberStatusStyles: Record<AttendanceStatus, string> = {
-  present: "border-green-300 bg-green-50 text-green-800",
-  absent: "border-rose-300 bg-rose-50 text-rose-800",
-  excused: "border-amber-300 bg-amber-50 text-amber-900",
+  present: "border-green-300 bg-green-50 text-green-800 hover:bg-green-100",
+  absent: "border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100",
+  excused: "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100",
   unknown: "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+};
+
+const memberStatusDots: Record<AttendanceStatus, string> = {
+  present: "bg-green-500",
+  absent: "bg-rose-500",
+  excused: "bg-amber-500",
+  unknown: "bg-slate-300",
 };
 
 export function AttendanceOverview({
@@ -103,7 +110,7 @@ export function AttendanceOverview({
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" role="group" aria-label="출결 명단">
+      <div className="mt-4 grid grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6" role="group" aria-label="출결 명단">
         {members.map((member) => {
           const status = getStatus(member.member_id);
           const statusLabel = attendanceOptions.find((option) => option.value === status)?.label;
@@ -111,12 +118,13 @@ export function AttendanceOverview({
             <button
               key={member.member_id}
               type="button"
-              className={`focus-ring min-h-16 rounded-xl border px-3 py-2 text-left transition ${memberStatusStyles[status]}`}
+              className={`focus-ring flex min-h-10 min-w-0 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left transition ${memberStatusStyles[status]}`}
               aria-label={`${member.display_name}, 현재 ${statusLabel}, ${attendanceOptions.find((option) => option.value === inputMode)?.label}으로 변경`}
               onClick={() => onChange(member.member_id, inputMode)}
+              title={`${member.display_name} · ${statusLabel}`}
             >
-              <span className="block truncate text-sm font-bold sm:text-base">{member.display_name}</span>
-              <span className="mt-1 block text-xs font-semibold opacity-75">{statusLabel}</span>
+              <span className={`size-2 shrink-0 rounded-full ${memberStatusDots[status]}`} aria-hidden="true" />
+              <span className="min-w-0 truncate text-xs font-semibold sm:text-sm">{member.display_name}</span>
             </button>
           );
         })}

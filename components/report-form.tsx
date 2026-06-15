@@ -24,6 +24,7 @@ export function ReportForm() {
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState<"attendance" | "details">("attendance");
+  const [additionalDetailMemberIds, setAdditionalDetailMemberIds] = useState<string[]>([]);
   const week = getWeekRange(getTodayInTimeZone());
   const draftState = useApiData(
     () => cellId ? api.getWeeklyReportDraft(user, cellId, week.week_start_date) : Promise.resolve(null),
@@ -51,6 +52,7 @@ export function ReportForm() {
     setMessage("");
     setSaveError("");
     setStep("attendance");
+    setAdditionalDetailMemberIds([]);
   };
   const updateRecord = (memberId: string, patch: Partial<WeeklyMemberRecord>) => {
     setRecords((items) => {
@@ -121,6 +123,23 @@ export function ReportForm() {
     },
     { present: 0, absent: 0, excused: 0, unknown: 0 },
   );
+  const getMemberRecord = (memberId: string) => records.find((record) => record.member_id === memberId);
+  const hasMemberContent = (memberId: string) => {
+    const record = getMemberRecord(memberId);
+    return Boolean(
+      sharings[memberId]
+      || prayers[memberId]
+      || record?.sharing_summary
+      || record?.prayer_request,
+    );
+  };
+  const presentMembers = members.filter((member) => getMemberRecord(member.member_id)?.attendance_status === "present");
+  const detailMembers = members.filter((member) =>
+    getMemberRecord(member.member_id)?.attendance_status === "present"
+    || additionalDetailMemberIds.includes(member.member_id)
+    || hasMemberContent(member.member_id),
+  );
+  const optionalDetailMembers = members.filter((member) => !detailMembers.includes(member));
 
   return (
     <form className="space-y-5" onSubmit={(event) => event.preventDefault()}>
@@ -172,13 +191,16 @@ export function ReportForm() {
                 <h2 className="text-lg font-bold">전체 나눔 요약</h2>
                 <label className="mt-4 block text-sm font-semibold">요약 내용<Textarea className="mt-2 min-h-24" value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="민감한 내용을 과하게 자세히 적지 않도록 확인해주세요." /></label>
               </Card>
-              <MemberContentBulkInput members={members} contentLabel="나눔" placeholder={"하늘자매: 샘플 나눔 내용 A\n푸름/ 샘플 나눔 내용 B"} onConfirm={(contents) => applyContents("sharing", contents)} />
-              <MemberContentBulkInput members={members} contentLabel="기도제목" placeholder={"하늘자매: 샘플 기도 내용 A\n푸름/ 샘플 기도 내용 B"} onConfirm={(contents) => applyContents("prayer", contents)} />
+              <MemberContentBulkInput members={presentMembers} contentLabel="나눔" placeholder={"하늘자매: 샘플 나눔 내용 A\n푸름/ 샘플 나눔 내용 B"} onConfirm={(contents) => applyContents("sharing", contents)} />
+              <MemberContentBulkInput members={presentMembers} contentLabel="기도제목" placeholder={"하늘자매: 샘플 기도 내용 A\n푸름/ 샘플 기도 내용 B"} onConfirm={(contents) => applyContents("prayer", contents)} />
               <section>
-                <h2 className="text-lg font-bold">인원별 기록</h2>
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-lg font-bold">출석 인원 기록</h2>
+                  <p className="text-sm text-slate-500">출석한 사람만 기본으로 표시합니다. 비출석 인원은 필요한 경우 아래에서 추가할 수 있습니다.</p>
+                </div>
                 <div className="mt-4 space-y-4">
-                  {members.map((member) => {
-                    const record = records.find((item) => item.member_id === member.member_id);
+                  {detailMembers.map((member) => {
+                    const record = getMemberRecord(member.member_id);
                     return (
                       <Card key={member.member_id}>
                         <div className="flex items-center justify-between gap-3">
@@ -192,8 +214,30 @@ export function ReportForm() {
                       </Card>
                     );
                   })}
+                  {!detailMembers.length && <EmptyState>기록을 작성할 출석 인원이 없습니다.</EmptyState>}
                 </div>
               </section>
+              {optionalDetailMembers.length > 0 && (
+                <Card>
+                  <h2 className="text-base font-bold">비출석 인원 기록 추가</h2>
+                  <p className="mt-1 text-sm text-slate-500">나중에 기록이 필요한 사람만 선택해주세요.</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {optionalDetailMembers.map((member) => {
+                      const status = getMemberRecord(member.member_id)?.attendance_status ?? "unknown";
+                      return (
+                        <button
+                          key={member.member_id}
+                          type="button"
+                          className="focus-ring rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          onClick={() => setAdditionalDetailMemberIds((ids) => [...ids, member.member_id])}
+                        >
+                          + {member.display_name} · {status === "absent" ? "결석" : status === "excused" ? "사유 결석" : "미확인"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Card>
+              )}
             </>
           )}
         </>

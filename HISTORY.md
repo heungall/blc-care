@@ -1128,3 +1128,68 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * 실제 셀 인원 규모에서 명단 그리드 열 수와 카드 밀도 확인
+
+---
+
+## 2026-06-15 - 출결 명단 칩 고밀도 표시
+
+### Summary
+
+* 출결 명단의 큰 이름 카드를 작은 이름 칩으로 축소했다.
+* 모바일 3열, 데스크톱 최대 6열로 한 화면에 더 많은 인원이 보이게 했다.
+* 상태는 이름 옆 색상 점과 칩 배경으로 표시하도록 단순화했다.
+
+### Changed Files
+
+* `components/attendance-overview.tsx`
+* `docs/09_DESIGN_SYSTEM.md`
+* `HISTORY.md`
+
+### Reason
+
+* 출결 명단 카드가 불필요하게 큰 공간을 차지해 전체 인원을 한눈에 보기 어려운 문제를 개선하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `git diff --check` - 통과
+
+### TODO
+
+* 긴 이름의 말줄임 표시와 실제 모바일 터치 편의 확인
+
+---
+
+## 2026-06-15 - 출석 인원 중심 나눔 작성
+
+### Summary
+
+* 나눔 작성 단계에서 출석 인원의 개인 기록 카드만 기본 표시하도록 변경했다.
+* 비출석 인원은 작은 기록 추가 목록으로 분리하고 필요할 때만 카드를 열 수 있게 했다.
+* 기존 나눔 또는 기도제목이 있는 비출석 인원은 기록 보존을 위해 계속 표시한다.
+* 나눔과 기도제목 일괄 입력의 이름 매칭 대상도 출석 인원으로 제한했다.
+
+### Changed Files
+
+* `components/report-form.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `HISTORY.md`
+
+### Reason
+
+* 결석한 사람의 빈 나눔·기도제목 입력 카드가 불필요한 스크롤과 작성 부담을 만드는 문제를 줄이기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `git diff --check` - 통과
+
+### TODO
+
+* 비출석 인원 기록 추가 후 다시 접는 동작 필요 여부 확인
