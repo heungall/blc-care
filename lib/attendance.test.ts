@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   attendanceStatusOptions,
   getAttendanceStatusLabel,
+  getAttendanceStatusMarker,
+  getAttendanceStatusShortLabel,
   getAttendanceStatusTone,
 } from "@/lib/attendance";
 import type { AttendanceStatus } from "@/lib/types";
@@ -27,5 +29,12 @@ describe("attendance status display", () => {
       "excused",
       "unknown",
     ]);
+  });
+
+  it("provides non-color markers and short labels", () => {
+    expect(attendanceStatusOptions.map((option) => option.shortLabel)).toEqual(["출", "결", "사", "미"]);
+    expect(attendanceStatusOptions.every((option) => option.marker.length > 0)).toBe(true);
+    expect(getAttendanceStatusShortLabel("excused")).toBe("사");
+    expect(getAttendanceStatusMarker("unknown")).toBe("?");
   });
 });

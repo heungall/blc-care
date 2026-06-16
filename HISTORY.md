@@ -1098,6 +1098,43 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 
 ---
 
+## 2026-06-16 - UI-007 색상 외 상태 표현과 내비게이션 접근성
+
+### Summary
+
+* 공용 `Badge`가 상태 기호와 스크린리더용 상태 범주를 함께 렌더링할 수 있게 했다.
+* 출결, 리포트, 새신자, 성도, 장기결석 상태 badge에 색상 외 기호를 추가했다.
+* 출결 입력 명단 chip에 짧은 상태 코드를 표시해 색상 없이도 상태를 구분하게 했다.
+* 사이드바, 모바일 전체 메뉴, 하단 탭의 현재 위치 표시를 `aria-current`와 visible `현재` 텍스트로 보강했다.
+
+### Changed Files
+
+* `components/ui.tsx`
+* `components/status-badge.tsx`
+* `components/attendance-status-badge.tsx`
+* `components/attendance-overview.tsx`
+* `components/app-shell.tsx`
+* `lib/attendance.ts`
+* `lib/attendance.test.ts`
+* `components/ui.test.tsx`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Checks
+
+* `npm run test` - 51개 테스트 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-008` 성도 목록 검색, 필터, 정렬, 페이지네이션 구현
+
+---
+
 ## 2026-06-15 - 주간 리포트 출결 우선 작성 흐름
 
 ### Summary

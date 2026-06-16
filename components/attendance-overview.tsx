@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { Badge, Button, Card } from "@/components/ui";
-import { getAttendanceStatusLabel, getAttendanceStatusTone } from "@/lib/attendance";
+import {
+  getAttendanceStatusLabel,
+  getAttendanceStatusMarker,
+  getAttendanceStatusShortLabel,
+  getAttendanceStatusTone,
+} from "@/lib/attendance";
 import type { AttendanceStatus, Member, WeeklyMemberRecord } from "@/lib/types";
 
 const attendanceOptions: Array<{
@@ -81,7 +86,7 @@ export function AttendanceOverview({
       <div className="mt-4 flex flex-wrap gap-2" aria-label="출결 현황">
         {attendanceOptions.map((option) => (
           <Badge key={option.value} tone={getAttendanceStatusTone(option.value)}>
-            {getAttendanceStatusLabel(option.value)} {counts[option.value]}명
+            {getAttendanceStatusMarker(option.value)} {getAttendanceStatusLabel(option.value)} {counts[option.value]}명
           </Badge>
         ))}
       </div>
@@ -103,6 +108,7 @@ export function AttendanceOverview({
                 }`}
                 onClick={() => setInputMode(option.value)}
               >
+                <span aria-hidden="true">{getAttendanceStatusMarker(option.value)} </span>
                 {getAttendanceStatusLabel(option.value)}
               </button>
             );
@@ -125,6 +131,9 @@ export function AttendanceOverview({
               title={`${member.display_name} · ${statusLabel}`}
             >
               <span className={`size-2 shrink-0 rounded-full ${memberStatusDots[status]}`} aria-hidden="true" />
+              <span className="shrink-0 rounded bg-white/70 px-1 text-[10px] font-bold" aria-hidden="true">
+                {getAttendanceStatusShortLabel(status)}
+              </span>
               <span className="min-w-0 truncate text-xs font-semibold sm:text-sm">{member.display_name}</span>
             </button>
           );

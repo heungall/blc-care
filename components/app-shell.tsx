@@ -125,9 +125,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             key={item.href}
             href={item.href}
             aria-current={pathname.startsWith(item.href) ? "page" : undefined}
-            className={`focus-ring rounded-xl px-2 py-3 text-center text-xs font-semibold ${pathname.startsWith(item.href) ? "bg-blue-50 text-blue-700" : "text-slate-500"}`}
+            className={`focus-ring rounded-xl border px-2 py-2 text-center text-xs font-semibold ${
+              pathname.startsWith(item.href)
+                ? "border-blue-300 bg-blue-50 text-blue-700"
+                : "border-transparent text-slate-500"
+            }`}
           >
-            {item.label}
+            <span className="block">{item.label}</span>
+            {pathname.startsWith(item.href) && <span className="mt-0.5 block text-[10px] font-bold">현재</span>}
           </Link>
         ))}
       </nav>
@@ -225,7 +230,21 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function NavLink({ href, label, active, onNavigate }: { href: string; label: string; active: boolean; onNavigate?: () => void }) {
-  return <Link href={href} aria-current={active ? "page" : undefined} onClick={onNavigate} className={`focus-ring block rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>{label}</Link>;
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      onClick={onNavigate}
+      className={`focus-ring flex items-center justify-between rounded-xl border px-3 py-3 text-sm font-semibold ${
+        active
+          ? "border-blue-200 bg-blue-50 text-blue-700"
+          : "border-transparent text-slate-600 hover:bg-slate-50"
+      }`}
+    >
+      <span>{label}</span>
+      {active && <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-blue-700">현재</span>}
+    </Link>
+  );
 }
 
 function MenuIcon() {

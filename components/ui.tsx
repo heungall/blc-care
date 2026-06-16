@@ -1,4 +1,5 @@
 import Link from "next/link";
+import React from "react";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -14,9 +15,13 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 export function Badge({
   children,
   tone = "neutral",
+  marker,
+  srLabel,
 }: {
   children: ReactNode;
   tone?: "neutral" | "primary" | "success" | "warning" | "danger";
+  marker?: string;
+  srLabel?: string;
 }) {
   const tones = {
     neutral: "bg-slate-100 text-slate-600",
@@ -25,7 +30,13 @@ export function Badge({
     warning: "bg-amber-100 text-amber-800",
     danger: "bg-rose-100 text-rose-700",
   };
-  return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>{children}</span>;
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>
+      {marker && <span aria-hidden="true">{marker}</span>}
+      {srLabel && <span className="sr-only">{srLabel}: </span>}
+      <span>{children}</span>
+    </span>
+  );
 }
 
 export function Button({
