@@ -56,7 +56,7 @@ export function NewcomerForm() {
         <p className="mt-1 text-sm text-slate-500">필수 항목은 이름과 휴대폰 번호입니다.</p>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <Field label="이름" required error={errors.name?.message}>
-            <Input {...register("name")} placeholder="샘플 이름" autoComplete="name" />
+            <Input {...register("name")} placeholder="이름을 입력해주세요" autoComplete="name" />
           </Field>
           <Field label="휴대폰 번호" required error={errors.phone?.message}>
             <Input {...register("phone")} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" />
@@ -64,7 +64,7 @@ export function NewcomerForm() {
         </div>
         <div className="mt-4">
           <Field label="주소">
-            <Input {...register("address")} placeholder="서울시 샘플구" autoComplete="street-address" />
+            <Input {...register("address")} placeholder="필요한 경우 입력해주세요" autoComplete="street-address" />
           </Field>
         </div>
       </Card>
@@ -75,9 +75,9 @@ export function NewcomerForm() {
           <Field label="방문 경로">
             <Select {...register("visit_channel")}>
               <option value="">선택해주세요</option>
-              <option value="샘플 지인 안내">지인 안내</option>
-              <option value="샘플 온라인 안내">온라인 안내</option>
-              <option value="샘플 현장 안내">현장 안내</option>
+              <option value="지인 안내">지인 안내</option>
+              <option value="온라인 안내">온라인 안내</option>
+              <option value="현장 안내">현장 안내</option>
             </Select>
           </Field>
           <Field label="예배 이후 일정">
@@ -108,7 +108,7 @@ export function NewcomerForm() {
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>등록 내용 제출</Button>
       {errors.root?.message && <p className="rounded-xl bg-rose-50 p-3 text-center text-sm text-rose-700">{errors.root.message}</p>}
-      <p className="text-center text-xs text-slate-400">제출 내용은 Supabase에 안전하게 저장됩니다.</p>
+      <p className="text-center text-xs text-slate-400">제출 내용은 허가된 담당자만 확인할 수 있습니다.</p>
     </form>
   );
 }

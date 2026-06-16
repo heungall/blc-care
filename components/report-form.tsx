@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AttendanceOverview } from "@/components/attendance-overview";
+import { AttendanceStatusBadge } from "@/components/attendance-status-badge";
 import { MemberContentBulkInput } from "@/components/member-content-bulk-input";
 import { useAuth } from "@/components/auth-provider";
 import { Badge, Button, Card, EmptyState, ErrorState, Input, LoadingState, Select, Textarea } from "@/components/ui";
 import { useApiData } from "@/hooks/use-api-data";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { attendanceStatusOptions, getAttendanceStatusLabel } from "@/lib/attendance";
 import { getTodayInTimeZone, getWeekRange } from "@/lib/date";
 import type { WeeklyMemberRecord } from "@/lib/types";
 
@@ -184,10 +186,9 @@ export function ReportForm() {
                   <div>
                     <h2 className="text-lg font-bold">출결 입력 결과</h2>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Badge tone="success">출석 {attendanceCounts.present}명</Badge>
-                      <Badge tone="danger">결석 {attendanceCounts.absent}명</Badge>
-                      <Badge tone="warning">사유 결석 {attendanceCounts.excused}명</Badge>
-                      <Badge tone="neutral">미확인 {attendanceCounts.unknown}명</Badge>
+                      {attendanceStatusOptions.map((option) => (
+                        <Badge key={option.value} tone={option.tone}>{option.label} {attendanceCounts[option.value]}명</Badge>
+                      ))}
                     </div>
                   </div>
                   <Button type="button" variant="secondary" onClick={() => setStep("attendance")}>출결 수정</Button>
@@ -197,8 +198,8 @@ export function ReportForm() {
                 <h2 className="text-lg font-bold">전체 나눔 요약</h2>
                 <label className="mt-4 block text-sm font-semibold">요약 내용<Textarea className="mt-2 min-h-24" value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="민감한 내용을 과하게 자세히 적지 않도록 확인해주세요." /></label>
               </Card>
-              <MemberContentBulkInput members={presentMembers} contentLabel="나눔" placeholder={"하늘자매: 샘플 나눔 내용 A\n푸름/ 샘플 나눔 내용 B"} onConfirm={(contents) => applyContents("sharing", contents)} />
-              <MemberContentBulkInput members={presentMembers} contentLabel="기도제목" placeholder={"하늘자매: 샘플 기도 내용 A\n푸름/ 샘플 기도 내용 B"} onConfirm={(contents) => applyContents("prayer", contents)} />
+              <MemberContentBulkInput members={presentMembers} contentLabel="나눔" placeholder={"이름: 나눔 내용을 입력해주세요\n이름: 다음 나눔 내용을 입력해주세요"} onConfirm={(contents) => applyContents("sharing", contents)} />
+              <MemberContentBulkInput members={presentMembers} contentLabel="기도제목" placeholder={"이름: 기도제목을 입력해주세요\n이름: 다음 기도제목을 입력해주세요"} onConfirm={(contents) => applyContents("prayer", contents)} />
               <section>
                 <div className="flex flex-col gap-1">
                   <h2 className="text-lg font-bold">출석 인원 기록</h2>
@@ -211,9 +212,7 @@ export function ReportForm() {
                       <Card key={member.member_id}>
                         <div className="flex items-center justify-between gap-3">
                           <h3 className="font-bold">{member.display_name}</h3>
-                          <Badge tone={record?.attendance_status === "present" ? "success" : record?.attendance_status === "absent" ? "danger" : record?.attendance_status === "excused" ? "warning" : "neutral"}>
-                            {record?.attendance_status === "present" ? "출석" : record?.attendance_status === "absent" ? "결석" : record?.attendance_status === "excused" ? "사유 결석" : "미확인"}
-                          </Badge>
+                          <AttendanceStatusBadge status={record?.attendance_status ?? "unknown"} />
                         </div>
                         <label className="mt-4 block text-sm font-semibold">개인 나눔 요약<Textarea className="mt-2 min-h-20" value={sharings[member.member_id] ?? record?.sharing_summary ?? ""} onChange={(event) => { setSharings((current) => ({ ...current, [member.member_id]: event.target.value })); updateRecord(member.member_id, { sharing_summary: event.target.value }); }} /></label>
                         <label className="mt-4 block text-sm font-semibold">기도제목<Textarea className="mt-2 min-h-20" value={prayers[member.member_id] ?? record?.prayer_request ?? ""} onChange={(event) => { setPrayers((current) => ({ ...current, [member.member_id]: event.target.value })); updateRecord(member.member_id, { prayer_request: event.target.value }); }} /></label>
@@ -237,7 +236,7 @@ export function ReportForm() {
                           className="focus-ring rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                           onClick={() => setAdditionalDetailMemberIds((ids) => [...ids, member.member_id])}
                         >
-                          + {member.display_name} · {status === "absent" ? "결석" : status === "excused" ? "사유 결석" : "미확인"}
+                          + {member.display_name} · {getAttendanceStatusLabel(status)}
                         </button>
                       );
                     })}

@@ -11,7 +11,7 @@ export default function AdminBackupPage() {
   const { user } = useAuth();
   const state = useApiData(() => api.getBackupHistory(user), [user.email]);
   return <AdminGuard>
-    <PageHeader title="백업 및 내보내기" description="운영 백업은 Supabase Dashboard에서 관리합니다." />
+    <PageHeader title="백업 및 내보내기" description="운영 데이터의 백업 상태와 내보내기 방법을 확인하세요." />
     {state.loading && <LoadingState />}
     {state.error && <ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState>}
     <Card>

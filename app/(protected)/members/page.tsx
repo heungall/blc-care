@@ -21,7 +21,7 @@ export default function MembersPage() {
     <>
       <PageHeader title="성도 목록" description="목록에서는 돌봄에 필요한 최소 정보만 표시합니다." />
       <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_220px]">
-        <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="샘플 이름 검색" aria-label="성도 검색" />
+        <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름으로 검색" aria-label="성도 검색" />
         <Select value={cellId} onChange={(event) => setCellId(event.target.value)} aria-label="셀 필터"><option value="all">전체 셀</option>{cells.map((cell) => <option key={cell.cell_id} value={cell.cell_id}>{cell.cell_name}</option>)}</Select>
       </div>
       {(cellsState.loading || membersState.loading) && <LoadingState />}

@@ -82,7 +82,7 @@ export default function AdminMemberImportPage() {
     <AdminGuard>
       <PageHeader
         title="성도 CSV 일괄 등록"
-        description="CSV 전체를 검증한 뒤 Supabase에 한 번에 등록합니다. 오류가 있으면 아무 행도 저장하지 않습니다."
+        description="CSV 전체를 검증한 뒤 한 번에 등록합니다. 오류가 있으면 아무 행도 저장하지 않습니다."
         action={<Button type="button" variant="secondary" onClick={downloadTemplate}>CSV 템플릿 다운로드</Button>}
       />
 

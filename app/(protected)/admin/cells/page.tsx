@@ -48,7 +48,7 @@ export default function AdminCellsPage() {
 
   return (
     <AdminGuard>
-      <PageHeader title="셀 관리" description="Supabase의 셀 정보와 담당자 배정을 관리합니다." />
+      <PageHeader title="셀 관리" description="셀 정보와 담당자 배정을 관리하세요." />
       {state.loading && <LoadingState />}
       {state.error && <ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState>}
       {state.data && (() => {

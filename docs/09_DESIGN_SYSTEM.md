@@ -130,6 +130,13 @@ Bluelight 홍대교회의 이름에서 오는 Blue 계열을 중심으로 사용
 처리 불가능한 상태입니다.
 ```
 
+추가 원칙:
+
+* 사용자 화면에 `샘플`, `mock`, 디버그 메시지를 표시하지 않는다.
+* 서버, API, DB 제품명 같은 구현 상세보다 사용자가 할 일과 확인할 내용을 설명한다.
+* 운영 작업에 필요한 위치를 안내해야 할 때만 관리 도구 이름을 표시한다.
+* placeholder 예시는 실제 개인정보처럼 보이는 이름이나 내용을 사용하지 않는다.
+
 ---
 
 # 5. Layout Principles
@@ -253,6 +260,9 @@ Mobile:
 미해결 특이사항 1건
 ```
 
+사진이 없는 성도의 아바타는 표시 이름의 첫 글자를 사용한다.
+목록과 상세 화면은 동일한 `MemberAvatar` 컴포넌트를 사용하며, 이름이 비어 있으면 `?`를 표시한다.
+
 ---
 
 ## 6.4 Member Detail `/members/[id]`
@@ -333,6 +343,22 @@ Mobile:
 지원 제안
 [textarea]
 ```
+
+---
+
+## 6.5.1 Weekly Report Detail `/reports/[id]`
+
+목적:
+
+* 기존 리포트를 모바일에서도 빠르게 훑어보고 필요한 경우에만 수정한다.
+
+원칙:
+
+* 기본 상태는 읽기 전용 요약 화면이다.
+* 이름과 출결 badge를 먼저 표시하고 작성된 개인 기록만 작은 요약 영역으로 표시한다.
+* 빈 항목과 비활성 입력 필드는 표시하지 않는다.
+* 수정 가능한 사용자에게만 `수정하기` 버튼을 제공한다.
+* 편집 모드에 진입한 경우에만 `select`, `textarea`, 저장·취소 버튼을 표시한다.
 
 ---
 
@@ -418,6 +444,18 @@ p-4 또는 p-6
 | 새신자 신규   | primary soft |
 | 연락완료     | warning      |
 | 성도 전환 완료 | success      |
+
+출결 상태 표시 규칙:
+
+| 내부 값      | 사용자 표시 | Badge   |
+| --------- | ------ | ------- |
+| `present` | 출석     | success |
+| `absent`  | 결석     | danger  |
+| `excused` | 사유 결석  | warning |
+| `unknown` | 미확인    | neutral |
+
+* 출결 상태의 내부 enum은 사용자 화면에 직접 표시하지 않는다.
+* 출결 상태 문구와 badge tone은 공용 헬퍼와 `AttendanceStatusBadge`를 사용한다.
 
 ---
 
@@ -557,6 +595,9 @@ Desktop: >= 1024px
 ## 9.2 Mobile
 
 * 하단 탭 사용 가능
+* 헤더의 전체 메뉴에서 역할별 전체 메뉴, 사용자 정보, 모드 전환, 로그아웃 제공
+* 전체 메뉴는 바깥 영역 선택, 닫기 버튼, `Escape` 입력으로 닫을 수 있고 내부에서 포커스를 유지
+* 현재 메뉴는 색상뿐 아니라 텍스트와 `aria-current="page"`로 표시
 * 주요 버튼은 full width 선호
 * 성도 목록은 카드형
 * 리포트 작성은 카드형
@@ -658,6 +699,7 @@ MemberContentBulkInput
 PrayerParseResultList
 StatusBadge
 RoleBadge
+MemberAvatar
 AdminDashboardCard
 NewcomerForm
 AbsenceAlertCard

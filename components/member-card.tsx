@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MemberAvatar } from "@/components/member-avatar";
 import { MemberStatusBadge } from "@/components/status-badge";
 import { Badge, Card } from "@/components/ui";
 import type { MemberView } from "@/lib/types";
@@ -8,9 +9,7 @@ export function MemberCard({ member }: { member: MemberView }) {
     <Link href={`/members/${member.member_id}`} className="focus-ring block rounded-2xl">
       <Card className="h-full transition hover:border-blue-300 hover:shadow-md">
         <div className="flex items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
-            {member.display_name.slice(-1)}
-          </div>
+          <MemberAvatar name={member.display_name} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="font-bold">{member.display_name}</h2>

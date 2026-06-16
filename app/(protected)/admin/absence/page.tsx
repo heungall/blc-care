@@ -39,7 +39,7 @@ export default function AdminAbsencePage() {
   };
 
   return <AdminGuard>
-    <PageHeader title="장기결석자 관리" description="Supabase의 장기결석 알림과 조치 상태를 관리합니다." />
+    <PageHeader title="장기결석자 관리" description="장기결석 알림을 확인하고 돌봄 조치 상태를 관리하세요." />
     {state.loading && <LoadingState />}
     {state.error && <ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState>}
     {state.data && <>

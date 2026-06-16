@@ -63,7 +63,7 @@ export default function AdminNewcomersPage() {
       {!newcomersState.loading && !cellsState.loading && !newcomersState.error && !cellsState.error && (
         <>
           <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_220px]">
-            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="샘플 이름 또는 연락처 검색" />
+            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름 또는 연락처 검색" />
             <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as NewcomerStatus | "all")}><option value="all">전체 상태</option><option value="new">신규</option><option value="contacted">연락 완료</option><option value="converted">성도 전환 완료</option><option value="archived">보관</option></Select>
           </div>
           <div className="grid gap-5 lg:grid-cols-[0.9fr_1.2fr]">

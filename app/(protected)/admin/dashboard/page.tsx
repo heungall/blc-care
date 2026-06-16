@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminGuard>
-      <PageHeader title="Admin 대시보드" description="서버에서 확인된 전체 돌봄 현황입니다." action={<LinkButton href="/dashboard" variant="secondary">셀리더 화면</LinkButton>} />
+      <PageHeader title="Admin 대시보드" description="전체 돌봄 현황과 필요한 관리 항목을 확인하세요." action={<LinkButton href="/dashboard" variant="secondary">셀리더 화면</LinkButton>} />
       {state.loading && <LoadingState />}
       {state.error && <ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState>}
       {data && (

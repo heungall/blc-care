@@ -1336,3 +1336,233 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * 기존 리포트와 신규 리포트 상세에서 성도 이름 표시 확인
+
+---
+
+## 2026-06-15 - UI/UX 개선 백로그 정리
+
+### Summary
+
+* 모바일 내비게이션과 로그아웃, 출결 상태 한글화, 사용자 문구, 아바타, 성도 목록, 대시보드, 접근성, 리포트 상세 밀도 개선을 우선순위별 TODO로 정리했다.
+* Admin+셀리더 모드의 표시와 실제 서버 조회 범위가 일치하도록 별도 권한 검증 작업을 추가했다.
+* 각 UI 개선을 한 항목씩 구현할 수 있도록 완료 기준과 검증 항목을 정의했다.
+
+### Changed Files
+
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 현재 UI 감사 결과와 문서 대비 누락 사항을 보존하고, 실사용 차단 문제부터 작은 단위로 안전하게 개선하기 위함.
+
+### Checks
+
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-001` 모바일 전체 메뉴, 사용자 정보, 로그아웃부터 구현
+
+---
+
+## 2026-06-15 - 모바일 전체 메뉴와 계정 접근 구현
+
+### Summary
+
+* 모바일 헤더에 역할별 전체 메뉴를 여는 버튼과 드로어를 추가했다.
+* 모바일 전체 메뉴에서 사용자 이름·이메일·현재 모드, 전체 허용 메뉴, 모드 전환, 로그아웃에 접근할 수 있게 했다.
+* 현재 메뉴에 `aria-current="page"`를 적용하고, `Escape`, 바깥 영역, 닫기 버튼, 메뉴 이동으로 드로어를 닫도록 구현했다.
+* 드로어가 열린 동안 포커스를 내부에 유지하고 닫힌 뒤 기존 포커스로 돌아가도록 보강했다.
+
+### Changed Files
+
+* `components/app-shell.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 모바일 사용자가 로그아웃하거나 전체 Admin 메뉴에 접근할 수 없던 실사용 차단 문제를 해결하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test` - 38개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-002` 출결 상태 한글화 및 공용 표시 규칙 구현
+
+---
+
+## 2026-06-15 - 출결 상태 한글화와 공용 표시 규칙 구현
+
+### Summary
+
+* 출결 상태별 한글 문구, 표시 순서, badge tone을 `lib/attendance.ts`에서 공용 관리하도록 구현했다.
+* 공용 `AttendanceStatusBadge`를 추가하고 성도 상세, 리포트 작성, 리포트 상세에 적용했다.
+* 성도 상세 최근 돌봄 기록에 노출되던 `present`, `absent` 등의 내부 enum을 제거했다.
+* 모든 출결 상태의 한글 문구와 badge tone을 검증하는 단위 테스트를 추가했다.
+
+### Changed Files
+
+* `lib/attendance.ts`
+* `lib/attendance.test.ts`
+* `components/attendance-status-badge.tsx`
+* `components/attendance-overview.tsx`
+* `components/report-form.tsx`
+* `app/(protected)/members/[id]/page.tsx`
+* `app/(protected)/reports/[id]/page.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 화면별로 중복되던 출결 상태 표시 로직을 통일하고 사용자에게 내부 영문 enum이 노출되는 문제를 해결하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test -- lib/attendance.test.ts` - 5개 테스트 통과
+* `npm.cmd run test` - 43개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-003` 리포트 상세 읽기 화면 간소화 구현
+
+---
+
+## 2026-06-15 - 리포트 상세 읽기 화면 간소화
+
+### Summary
+
+* 리포트 상세를 기본 읽기 모드와 명시적인 편집 모드로 분리했다.
+* 읽기 모드에서 비활성 `select`, `textarea`를 제거하고 작성된 개인 기록만 간략한 요약 카드로 표시했다.
+* 개인 기록이 없는 인원은 이름과 출결 상태만 표시해 모바일 세로 길이를 줄였다.
+* 수정 가능 사용자는 `수정하기`로 편집 모드에 진입하며 저장 또는 취소 후 읽기 모드로 돌아가도록 구현했다.
+
+### Changed Files
+
+* `app/(protected)/reports/[id]/page.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 리포트를 조회할 때 큰 비활성 입력 필드와 빈 항목이 과도한 모바일 스크롤을 만드는 문제를 해결하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test` - 43개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-004` 사용자 화면 문구 정리 구현
+
+---
+
+## 2026-06-15 - 사용자 화면 문구 정리
+
+### Summary
+
+* 성도 검색, 새신자 검색·등록, 리포트 일괄 입력에서 사용자에게 보이던 `샘플` 문구를 제거했다.
+* 대시보드, 리포트 목록, Admin 화면의 서버·DB 구현 중심 설명을 사용자가 확인하거나 수행할 내용 중심으로 변경했다.
+* 새신자 방문 경로가 `샘플` 접두어 없이 정상 문구로 저장되도록 수정했다.
+* 실제 운영 위치 안내가 필요한 백업 화면의 `Supabase Dashboard` 안내는 유지했다.
+
+### Changed Files
+
+* `app/(protected)/members/page.tsx`
+* `app/(protected)/dashboard/page.tsx`
+* `app/(protected)/reports/page.tsx`
+* `app/(protected)/admin/dashboard/page.tsx`
+* `app/(protected)/admin/newcomers/page.tsx`
+* `app/(protected)/admin/absence/page.tsx`
+* `app/(protected)/admin/cells/page.tsx`
+* `app/(protected)/admin/backup/page.tsx`
+* `app/(protected)/admin/settings/page.tsx`
+* `app/(protected)/admin/users/page.tsx`
+* `app/(protected)/admin/members/import/page.tsx`
+* `components/newcomer-form.tsx`
+* `components/report-form.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* mock 잔재와 구현 상세가 사용자 화면의 신뢰도와 이해도를 떨어뜨리는 문제를 해결하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test -- components/newcomer-form.test.ts` - 3개 테스트 통과
+* `npm.cmd run test` - 43개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-005` 아바타 대체 문자 공용화 구현
+
+---
+
+## 2026-06-15 - 성도 아바타 대체 문자 공용화
+
+### Summary
+
+* 성도 표시 이름의 첫 글자를 반환하는 공용 이니셜 헬퍼를 추가했다.
+* 목록과 상세 화면이 동일한 `MemberAvatar` 컴포넌트를 사용하도록 변경했다.
+* 앞뒤 공백을 제거하고 이름이 비어 있으면 `?`를 표시하도록 안전한 fallback을 적용했다.
+* 첫 글자, 공백, 빈 이름 동작을 검증하는 단위 테스트를 추가했다.
+
+### Changed Files
+
+* `lib/member-display.ts`
+* `lib/member-display.test.ts`
+* `components/member-avatar.tsx`
+* `components/member-card.tsx`
+* `app/(protected)/members/[id]/page.tsx`
+* `docs/01_REQUIREMENTS.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 한국어 이름의 마지막 글자가 아바타로 표시되던 어색함을 해결하고 목록과 상세 화면의 대체 표시 규칙을 통일하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test -- lib/member-display.test.ts` - 3개 테스트 통과
+* `npm.cmd run test` - 46개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-006` Admin+셀리더 모드의 실제 조회 범위 일치 구현

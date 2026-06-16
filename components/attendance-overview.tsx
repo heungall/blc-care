@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { Badge, Button, Card } from "@/components/ui";
+import { getAttendanceStatusLabel, getAttendanceStatusTone } from "@/lib/attendance";
 import type { AttendanceStatus, Member, WeeklyMemberRecord } from "@/lib/types";
 
 const attendanceOptions: Array<{
   value: AttendanceStatus;
-  label: string;
   selectedClassName: string;
 }> = [
-  { value: "present", label: "출석", selectedClassName: "border-green-600 bg-green-600 text-white" },
-  { value: "absent", label: "결석", selectedClassName: "border-rose-600 bg-rose-600 text-white" },
-  { value: "excused", label: "사유 결석", selectedClassName: "border-amber-500 bg-amber-500 text-white" },
-  { value: "unknown", label: "미확인", selectedClassName: "border-slate-500 bg-slate-500 text-white" },
+  { value: "present", selectedClassName: "border-green-600 bg-green-600 text-white" },
+  { value: "absent", selectedClassName: "border-rose-600 bg-rose-600 text-white" },
+  { value: "excused", selectedClassName: "border-amber-500 bg-amber-500 text-white" },
+  { value: "unknown", selectedClassName: "border-slate-500 bg-slate-500 text-white" },
 ];
 
 const memberStatusStyles: Record<AttendanceStatus, string> = {
@@ -80,8 +80,8 @@ export function AttendanceOverview({
 
       <div className="mt-4 flex flex-wrap gap-2" aria-label="출결 현황">
         {attendanceOptions.map((option) => (
-          <Badge key={option.value} tone={option.value === "present" ? "success" : option.value === "absent" ? "danger" : option.value === "excused" ? "warning" : "neutral"}>
-            {option.label} {counts[option.value]}명
+          <Badge key={option.value} tone={getAttendanceStatusTone(option.value)}>
+            {getAttendanceStatusLabel(option.value)} {counts[option.value]}명
           </Badge>
         ))}
       </div>
@@ -103,7 +103,7 @@ export function AttendanceOverview({
                 }`}
                 onClick={() => setInputMode(option.value)}
               >
-                {option.label}
+                {getAttendanceStatusLabel(option.value)}
               </button>
             );
           })}
@@ -113,13 +113,14 @@ export function AttendanceOverview({
       <div className="mt-4 grid grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6" role="group" aria-label="출결 명단">
         {members.map((member) => {
           const status = getStatus(member.member_id);
-          const statusLabel = attendanceOptions.find((option) => option.value === status)?.label;
+          const statusLabel = getAttendanceStatusLabel(status);
+          const inputModeLabel = getAttendanceStatusLabel(inputMode);
           return (
             <button
               key={member.member_id}
               type="button"
               className={`focus-ring flex min-h-10 min-w-0 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left transition ${memberStatusStyles[status]}`}
-              aria-label={`${member.display_name}, 현재 ${statusLabel}, ${attendanceOptions.find((option) => option.value === inputMode)?.label}으로 변경`}
+              aria-label={`${member.display_name}, 현재 ${statusLabel}, ${inputModeLabel}으로 변경`}
               onClick={() => onChange(member.member_id, inputMode)}
               title={`${member.display_name} · ${statusLabel}`}
             >

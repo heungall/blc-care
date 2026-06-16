@@ -22,7 +22,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader title={leaderMode ? "담당 셀 대시보드" : "돌봄 현황"} description={`${user.name}님의 조회 가능 범위를 서버에서 확인했습니다.`} action={<LinkButton href="/reports/new">이번 주 리포트 작성</LinkButton>} />
+      <PageHeader title={leaderMode ? "담당 셀 대시보드" : "돌봄 현황"} description={`${user.name}님의 돌봄 현황을 확인하세요.`} action={<LinkButton href="/reports/new">이번 주 리포트 작성</LinkButton>} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label={leaderMode ? "담당 셀" : "조회 가능한 셀"} value={`${cells.length}개`} />
         <SummaryCard label="조회 가능한 성도" value={`${members.length}명`} />
