@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
+import { getScopedCellIds } from "@/lib/data-scope";
 import { getWeekRange } from "@/lib/date";
 import { parsePrayerText } from "@/lib/prayer-parser";
 import { getCurrentAppUser } from "@/lib/supabase/auth";
@@ -42,14 +43,14 @@ export async function POST(request: Request) {
     const user = await getCurrentAppUser();
     if (!user) return failure("UNAUTHORIZED", "로그인이 필요합니다.", 401);
     const isAdmin = user.roles.includes("admin");
-    const cellIds = isAdmin ? null : user.assigned_cells.map((item) => item.cell_id);
+    const cellIds = getScopedCellIds(user, data.scope);
 
     switch (body.action) {
       case "verifyUser":
         return success(user);
       case "getCells": {
         let query = admin.from("cells").select("*").order("sort_order").order("cell_name");
-        if (!isAdmin) query = query.in("cell_id", cellIds!);
+        if (cellIds) query = query.in("cell_id", cellIds);
         const result = await query;
         return databaseResult({ items: result.data ?? [] }, result.error);
       }

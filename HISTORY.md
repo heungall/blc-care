@@ -1061,6 +1061,43 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 
 ---
 
+## 2026-06-16 - UI-006 Admin+셀리더 조회 범위 일치
+
+### Summary
+
+* Admin+셀리더 사용자의 셀리더 모드가 서버 API 조회 scope에 반영되도록 했다.
+* `/dashboard`, `/members`, `/reports`는 셀리더 모드에서 배정 셀 데이터만 요청한다.
+* Admin 모드와 `/admin/*` 화면은 전체 데이터 조회를 유지한다.
+* scope 해석 로직을 순수 함수로 분리하고 Admin, 셀리더, 겸임자 케이스를 테스트했다.
+
+### Changed Files
+
+* `lib/data-scope.ts`
+* `lib/data-scope.test.ts`
+* `lib/api.ts`
+* `app/api/supabase/route.ts`
+* `app/(protected)/dashboard/page.tsx`
+* `app/(protected)/members/page.tsx`
+* `app/(protected)/reports/page.tsx`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/05_PERMISSION_RULES.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Checks
+
+* `npm run test -- lib/data-scope.test.ts` - 3개 테스트 통과
+* `npm run test` - 49개 테스트 통과
+* `npm run lint` - 통과
+* `npm run typecheck` - 통과
+* `npm run build` - 전체 22개 route 생성 완료
+
+### TODO
+
+* `UI-007` 색상 외 상태 표현과 내비게이션 접근성 구현
+
+---
+
 ## 2026-06-15 - 주간 리포트 출결 우선 작성 흐름
 
 ### Summary

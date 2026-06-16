@@ -17,6 +17,7 @@ import type {
   WeeklyMemberRecord,
   Role,
 } from "@/lib/types";
+import type { DataScope } from "@/lib/data-scope";
 
 type ApiResponseError = {
   code: string;
@@ -174,9 +175,9 @@ export const api = {
     const user = await supabaseRequest<VerifiedUser>("verifyUser");
     return { ...user, created_at: user.created_at ?? "", updated_at: user.updated_at ?? "" };
   },
-  getCells: async (user: User) => {
+  getCells: async (user: User, data: { scope?: DataScope } = {}) => {
     void user;
-    return (await supabaseRequest<{ items: Cell[] }>("getCells")).items;
+    return (await supabaseRequest<{ items: Cell[] }>("getCells", data)).items;
   },
   getMembers: async (user: User, data: Record<string, unknown> = {}) =>
     (await supabaseRequest<{ items: MemberView[] }>("getMembers", data)).items,

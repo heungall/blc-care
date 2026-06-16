@@ -454,6 +454,10 @@ UI에서는 현재 화면의 권한 맥락을 표시한다.
 | `/reports/new` | 배정된 셀 우선                       |
 | `/members`     | Admin 모드에서는 전체, 셀리더 모드에서는 배정 셀 |
 
+Admin과 셀리더 역할을 모두 가진 사용자가 셀리더 모드로 `/dashboard`, `/members`, `/reports`를 조회하면
+클라이언트가 `scope=leader`를 서버에 전달하고, 서버는 `user_cell_assignments`의 활성 배정 셀로 결과를 제한한다.
+Admin 모드와 `/admin/*` 화면은 전체 데이터 범위를 유지한다.
+
 ## 9.4 리포트 작성
 
 Admin + 셀리더는 전체 셀에 대해 리포트를 작성할 수 있다.
