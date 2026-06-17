@@ -15,8 +15,9 @@ import type { WeeklyMemberRecord } from "@/lib/types";
 
 export function ReportForm() {
   const router = useRouter();
-  const { user } = useAuth();
-  const cellsState = useApiData(() => api.getCells(user), [user.email]);
+  const { user, leaderMode } = useAuth();
+  const scope = leaderMode ? "leader" : "admin";
+  const cellsState = useApiData(() => api.getCells(user, { scope }), [user.email, leaderMode]);
   const cells = useMemo(() => cellsState.data ?? [], [cellsState.data]);
   const [cellId, setCellId] = useState("");
   const [sharings, setSharings] = useState<Record<string, string>>({});
@@ -31,8 +32,8 @@ export function ReportForm() {
   const [additionalDetailMemberIds, setAdditionalDetailMemberIds] = useState<string[]>([]);
   const week = getWeekRange(getTodayInTimeZone());
   const draftState = useApiData(
-    () => cellId ? api.getWeeklyReportDraft(user, cellId, week.week_start_date) : Promise.resolve(null),
-    [user.email, cellId, week.week_start_date],
+    () => cellId ? api.getWeeklyReportDraft(user, cellId, week.week_start_date, { scope }) : Promise.resolve(null),
+    [user.email, cellId, week.week_start_date, leaderMode],
   );
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export function ReportForm() {
             prayer_request: prayers[member.member_id] ?? record?.prayer_request ?? "",
           };
         }),
-      });
+      }, { scope });
       if (status === "submitted") {
         router.replace("/dashboard");
         return;

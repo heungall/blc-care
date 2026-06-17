@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import { getScopedCellIds } from "@/lib/data-scope";
+import { getScopedCellIds, hasAdminScope } from "@/lib/data-scope";
 import { getWeekRange } from "@/lib/date";
 import { parsePrayerText } from "@/lib/prayer-parser";
 import { getCurrentAppUser } from "@/lib/supabase/auth";
@@ -43,6 +43,7 @@ export async function POST(request: Request) {
     const user = await getCurrentAppUser();
     if (!user) return failure("UNAUTHORIZED", "로그인이 필요합니다.", 401);
     const isAdmin = user.roles.includes("admin");
+    const isAdminScope = hasAdminScope(user, data.scope);
     const cellIds = getScopedCellIds(user, data.scope);
 
     switch (body.action) {
@@ -59,15 +60,15 @@ export async function POST(request: Request) {
       case "getMemberDetail":
         return getMemberDetail(admin, cellIds, requiredString(data.member_id, "member_id"));
       case "updateMember":
-        return updateMember(admin, user, cellIds, isAdmin, data);
+        return updateMember(admin, user, cellIds, isAdminScope, data);
       case "getReports":
         return getReports(admin, cellIds, data);
       case "getReportDetail":
-        return getReportDetail(admin, cellIds, requiredString(data.report_id, "report_id"), isAdmin);
+        return getReportDetail(admin, cellIds, requiredString(data.report_id, "report_id"), isAdminScope);
       case "getWeeklyReportDraft":
-        return getWeeklyReportDraft(admin, user, cellIds, data);
+        return getWeeklyReportDraft(admin, user, cellIds, isAdminScope, data);
       case "saveWeeklyReport":
-        return saveWeeklyReport(admin, user, cellIds, data);
+        return saveWeeklyReport(admin, user, cellIds, isAdminScope, data);
       case "parsePrayerRequests": {
         const cellId = requiredString(data.cell_id, "cell_id");
         assertCellAccess(cellIds, cellId);
@@ -200,29 +201,64 @@ export async function POST(request: Request) {
 }
 
 async function getMembers(admin: any, cellIds: string[] | null, data: Record<string, unknown>) {
-  let query = admin.from("members").select("*, cells:current_cell_id(cell_name)").order("display_name");
+  const page = boundedInteger(data.page, 1, 1, Number.MAX_SAFE_INTEGER);
+  const pageSize = boundedInteger(data.page_size, 20, 1, 100);
+  const sort = data.sort === "name_desc" ? "name_desc" : "name_asc";
+  const keyword = typeof data.keyword === "string" ? searchKeyword(data.keyword) : "";
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = admin
+    .from("members")
+    .select(
+      "member_id,full_name,display_name,name_aliases,photo_file_id,photo_url,current_cell_id,status,created_at,updated_at,cells:current_cell_id(cell_name)",
+      { count: "exact" },
+    )
+    .order("display_name", { ascending: sort === "name_asc" })
+    .range(from, to);
   if (cellIds) query = query.in("current_cell_id", cellIds);
   if (typeof data.cell_id === "string" && data.cell_id) {
     assertCellAccess(cellIds, data.cell_id);
     query = query.eq("current_cell_id", data.cell_id);
   }
-  if (typeof data.status === "string" && data.status) query = query.eq("status", data.status);
-  const { data: members, error } = await query;
+  if (typeof data.status === "string" && data.status) {
+    query = query.eq("status", memberStatus(data.status));
+  }
+  if (keyword) {
+    query = query.or(`full_name.ilike.%${keyword}%,display_name.ilike.%${keyword}%,name_aliases.cs.{${keyword}}`);
+  }
+  const { data: members, error, count } = await query;
   if (error) throw error;
   const ids = (members ?? []).map((item: { member_id: string }) => item.member_id);
   const [{ data: records }, { data: notes }] = ids.length ? await Promise.all([
     admin.from("weekly_member_records").select("member_id,report_date,attendance_status").in("member_id", ids).eq("attendance_status", "present").order("report_date", { ascending: false }),
     admin.from("member_notes").select("member_id").in("member_id", ids).eq("resolved", false),
   ]) : [{ data: [] }, { data: [] }];
-  const keyword = typeof data.keyword === "string" ? data.keyword.trim().toLowerCase() : "";
   const items = (members ?? []).map((member: Record<string, any>) => ({
-    ...member,
+    member_id: member.member_id,
+    full_name: member.full_name,
+    display_name: member.display_name,
+    name_aliases: [],
+    photo_file_id: member.photo_file_id,
+    photo_url: member.photo_url,
+    current_cell_id: member.current_cell_id,
+    status: member.status,
+    created_at: member.created_at,
+    updated_at: member.updated_at,
     current_cell_name: member.cells?.cell_name,
-    cells: undefined,
     last_attendance_date: records?.find((record: any) => record.member_id === member.member_id)?.report_date,
     unresolved_note_count: notes?.filter((note: any) => note.member_id === member.member_id).length ?? 0,
-  })).filter((member: Record<string, any>) => !keyword || [member.full_name, member.display_name, ...(member.name_aliases ?? [])].some((value) => String(value).toLowerCase().includes(keyword)));
-  return success({ items });
+  }));
+  const total = count ?? items.length;
+  return success({
+    items,
+    pagination: {
+      page,
+      page_size: pageSize,
+      total,
+      total_pages: Math.max(1, Math.ceil(total / pageSize)),
+    },
+  });
 }
 
 async function getMemberDetail(admin: any, cellIds: string[] | null, memberId: string) {
@@ -355,7 +391,7 @@ async function getReportDetail(admin: any, cellIds: string[] | null, reportId: s
   });
 }
 
-async function getWeeklyReportDraft(admin: any, user: AppUser, cellIds: string[] | null, data: Record<string, unknown>) {
+async function getWeeklyReportDraft(admin: any, user: AppUser, cellIds: string[] | null, isAdminScope: boolean, data: Record<string, unknown>) {
   const cellId = requiredString(data.cell_id, "cell_id");
   assertCellAccess(cellIds, cellId);
   const weekStart = typeof data.week_start_date === "string" ? data.week_start_date : new Date().toISOString().slice(0, 10);
@@ -369,21 +405,21 @@ async function getWeeklyReportDraft(admin: any, user: AppUser, cellIds: string[]
     week_end_date: week.week_end_date, status: "draft", locked: false, overall_summary: "", created_at: "", updated_at: "",
   };
   const { data: records } = existing ? await admin.from("weekly_member_records").select("*").eq("report_id", existing.report_id) : { data: [] };
-  return success({ is_existing: Boolean(existing), report, members: members ?? [], records: records ?? [], can_edit: user.roles.includes("admin") || dateInRange(week.week_start_date, week.week_end_date) });
+  return success({ is_existing: Boolean(existing), report, members: members ?? [], records: records ?? [], can_edit: isAdminScope || dateInRange(week.week_start_date, week.week_end_date) });
 }
 
-async function saveWeeklyReport(admin: any, user: AppUser, cellIds: string[] | null, data: Record<string, unknown>) {
+async function saveWeeklyReport(admin: any, user: AppUser, cellIds: string[] | null, isAdminScope: boolean, data: Record<string, unknown>) {
   const cellId = requiredString(data.cell_id, "cell_id");
   assertCellAccess(cellIds, cellId);
   const week = getWeekRange(requiredString(data.week_start_date, "week_start_date"));
-  if (!user.roles.includes("admin") && !dateInRange(week.week_start_date, week.week_end_date)) {
+  if (!isAdminScope && !dateInRange(week.week_start_date, week.week_end_date)) {
     throw new ActionError("FORBIDDEN", "현재 주차의 담당 셀 리포트만 수정할 수 있습니다.", 403);
   }
   const reportId = typeof data.report_id === "string" && data.report_id || undefined;
   if (reportId) {
     const { data: existing, error } = await admin.from("weekly_cell_reports").select("cell_id,locked,status").eq("report_id", reportId).single();
     if (error) throw error;
-    if (existing.cell_id !== cellId || (!user.roles.includes("admin") && (existing.locked || existing.status === "locked"))) {
+    if (existing.cell_id !== cellId || (!isAdminScope && (existing.locked || existing.status === "locked"))) {
       throw new ActionError("FORBIDDEN", "이 리포트를 수정할 수 없습니다.", 403);
     }
   }
@@ -416,7 +452,7 @@ async function saveWeeklyReport(admin: any, user: AppUser, cellIds: string[] | n
     const { error } = await admin.from("weekly_member_records").upsert(rows, { onConflict: "report_id,member_id" });
     if (error) throw error;
   }
-  return getReportDetail(admin, cellIds, reportResult.data.report_id, user.roles.includes("admin"));
+  return getReportDetail(admin, cellIds, reportResult.data.report_id, isAdminScope);
 }
 
 async function convertNewcomer(admin: any, user: AppUser, data: Record<string, unknown>) {
@@ -492,6 +528,16 @@ function numberOrNull(value: unknown, name: string, min: number, max: number) {
   const number = typeof value === "number" ? value : Number(value);
   if (!Number.isInteger(number) || number < min || number > max) throw new ActionError("BAD_REQUEST", `${name} 값을 확인해주세요.`, 400);
   return number;
+}
+
+function boundedInteger(value: unknown, fallback: number, min: number, max: number) {
+  const number = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(number)) return fallback;
+  return Math.min(max, Math.max(min, number));
+}
+
+function searchKeyword(value: string) {
+  return value.trim().replace(/[,%{}()"]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function optionalEnum(value: unknown, allowed: string[], name: string) {

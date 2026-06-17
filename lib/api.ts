@@ -16,8 +16,20 @@ import type {
   WeeklyCellReport,
   WeeklyMemberRecord,
   Role,
+  MemberStatus,
 } from "@/lib/types";
 import type { DataScope } from "@/lib/data-scope";
+
+type ScopeOptions = { scope?: DataScope };
+export type Pagination = { page: number; page_size: number; total: number; total_pages: number };
+export type MemberListQuery = ScopeOptions & {
+  cell_id?: string;
+  status?: MemberStatus;
+  keyword?: string;
+  sort?: "name_asc" | "name_desc";
+  page?: number;
+  page_size?: number;
+};
 
 type ApiResponseError = {
   code: string;
@@ -59,6 +71,11 @@ export type MemberDetail = {
     records: WeeklyMemberRecord[];
     notes: MemberNote[];
   };
+};
+
+export type MemberListResult = {
+  items: MemberView[];
+  pagination: Pagination;
 };
 
 export type UpdateMemberPayload = Pick<Member,
@@ -175,27 +192,32 @@ export const api = {
     const user = await supabaseRequest<VerifiedUser>("verifyUser");
     return { ...user, created_at: user.created_at ?? "", updated_at: user.updated_at ?? "" };
   },
-  getCells: async (user: User, data: { scope?: DataScope } = {}) => {
+  getCells: async (user: User, data: ScopeOptions = {}) => {
     void user;
     return (await supabaseRequest<{ items: Cell[] }>("getCells", data)).items;
   },
   getMembers: async (user: User, data: Record<string, unknown> = {}) =>
-    (await supabaseRequest<{ items: MemberView[] }>("getMembers", data)).items,
-  getMemberDetail: (user: User, memberId: string) =>
-    supabaseRequest<MemberDetail>("getMemberDetail", { member_id: memberId }),
-  updateMember: (user: User, payload: UpdateMemberPayload) =>
-    supabaseRequest<Member & { current_cell_name?: string }>("updateMember", payload as unknown as Record<string, unknown>),
+    (await supabaseRequest<{ items: MemberView[] }>("getMembers", { page_size: 100, ...data })).items,
+  getMembersList: (user: User, data: MemberListQuery = {}) => {
+    void user;
+    return supabaseRequest<MemberListResult>("getMembers", data as Record<string, unknown>);
+  },
+  getMemberDetail: (user: User, memberId: string, data: ScopeOptions = {}) =>
+    supabaseRequest<MemberDetail>("getMemberDetail", { member_id: memberId, ...data }),
+  updateMember: (user: User, payload: UpdateMemberPayload, data: ScopeOptions = {}) =>
+    supabaseRequest<Member & { current_cell_name?: string }>("updateMember", { ...(payload as unknown as Record<string, unknown>), ...data }),
   getReports: async (user: User, data: Record<string, unknown> = {}) =>
     (await supabaseRequest<{ items: ReportListItem[] }>("getReports", data)).items,
-  getReportDetail: (user: User, reportId: string) =>
-    supabaseRequest<ReportDetail>("getReportDetail", { report_id: reportId }),
-  getWeeklyReportDraft: (user: User, cellId: string, weekStartDate?: string) =>
+  getReportDetail: (user: User, reportId: string, data: ScopeOptions = {}) =>
+    supabaseRequest<ReportDetail>("getReportDetail", { report_id: reportId, ...data }),
+  getWeeklyReportDraft: (user: User, cellId: string, weekStartDate?: string, data: ScopeOptions = {}) =>
     supabaseRequest<WeeklyReportDraft>("getWeeklyReportDraft", {
       cell_id: cellId,
       week_start_date: weekStartDate,
+      ...data,
     }),
-  saveWeeklyReport: (user: User, payload: SaveReportPayload) =>
-    supabaseRequest<ReportDetail>("saveWeeklyReport", payload as unknown as Record<string, unknown>),
+  saveWeeklyReport: (user: User, payload: SaveReportPayload, data: ScopeOptions = {}) =>
+    supabaseRequest<ReportDetail>("saveWeeklyReport", { ...(payload as unknown as Record<string, unknown>), ...data }),
   parsePrayerRequests: (user: User, cellId: string, rawText: string) =>
     supabaseRequest<PrayerParseResult>("parsePrayerRequests", { cell_id: cellId, raw_text: rawText }),
   submitNewcomer: (values: NewcomerFormValues) =>

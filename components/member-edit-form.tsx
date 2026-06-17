@@ -3,22 +3,25 @@
 import { useState } from "react";
 import { Button, Card, Input, Select, Textarea } from "@/components/ui";
 import { api, getApiErrorMessage, type UpdateMemberPayload } from "@/lib/api";
+import type { DataScope } from "@/lib/data-scope";
 import type { Cell, Member, User } from "@/lib/types";
 
 export function MemberEditForm({
   user,
   member,
   cells,
+  scope,
   onCancel,
   onSaved,
 }: {
   user: User;
   member: Member;
   cells: Cell[];
+  scope?: DataScope;
   onCancel: () => void;
   onSaved: (member: Member & { current_cell_name?: string }) => void;
 }) {
-  const isAdmin = user.roles.includes("admin");
+  const isAdmin = user.roles.includes("admin") && scope !== "leader";
   const [values, setValues] = useState<UpdateMemberPayload>({
     member_id: member.member_id,
     full_name: member.full_name,
@@ -51,7 +54,7 @@ export function MemberEditForm({
     setSaving(true);
     setError("");
     try {
-      onSaved(await api.updateMember(user, values));
+      onSaved(await api.updateMember(user, values, { scope }));
     } catch (saveError) {
       setError(getApiErrorMessage(saveError));
     } finally {

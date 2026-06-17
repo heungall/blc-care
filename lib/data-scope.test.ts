@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getScopedCellIds } from "@/lib/data-scope";
+import { getScopedCellIds, hasAdminScope, isLeaderScope } from "@/lib/data-scope";
 
 describe("getScopedCellIds", () => {
   const assigned_cells = [{ cell_id: "cell-a" }, { cell_id: "cell-b" }];
@@ -16,5 +16,12 @@ describe("getScopedCellIds", () => {
     const user = { roles: ["admin", "cell_leader"] as const, assigned_cells };
     expect(getScopedCellIds(user, "admin")).toBeNull();
     expect(getScopedCellIds(user, "leader")).toEqual(["cell-a", "cell-b"]);
+  });
+
+  it("treats leader scope as non-admin permission context", () => {
+    const user = { roles: ["admin", "cell_leader"] as const, assigned_cells };
+    expect(isLeaderScope(user, "leader")).toBe(true);
+    expect(hasAdminScope(user, "leader")).toBe(false);
+    expect(hasAdminScope(user, "admin")).toBe(true);
   });
 });

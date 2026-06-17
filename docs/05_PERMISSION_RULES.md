@@ -242,7 +242,7 @@ Admin은 전체 데이터에 접근할 수 있다.
 | ----------------- | ------------------------ |
 | admin             | 전체 성도                    |
 | cell_leader       | 배정된 셀의 성도                |
-| admin,cell_leader | 전체 성도. 셀리더 모드에서는 배정 셀 우선 |
+| admin,cell_leader | Admin 모드에서는 전체 성도. 셀리더 모드에서는 배정 셀 |
 
 ## 6.2 성도 상세 조회
 
@@ -454,14 +454,15 @@ UI에서는 현재 화면의 권한 맥락을 표시한다.
 | `/reports/new` | 배정된 셀 우선                       |
 | `/members`     | Admin 모드에서는 전체, 셀리더 모드에서는 배정 셀 |
 
-Admin과 셀리더 역할을 모두 가진 사용자가 셀리더 모드로 `/dashboard`, `/members`, `/reports`를 조회하면
-클라이언트가 `scope=leader`를 서버에 전달하고, 서버는 `user_cell_assignments`의 활성 배정 셀로 결과를 제한한다.
-Admin 모드와 `/admin/*` 화면은 전체 데이터 범위를 유지한다.
+Admin과 셀리더 역할을 모두 가진 사용자가 셀리더 모드로 `/dashboard`, `/members`, `/members/[id]`,
+`/reports`, `/reports/[id]`, `/reports/new`를 사용하면 클라이언트가 `scope=leader`를 서버에 전달한다.
+서버는 `user_cell_assignments`의 활성 배정 셀로 조회·작성·수정 범위를 제한하고, Admin 전용 우회 권한을
+적용하지 않는다. Admin 모드와 `/admin/*` 화면은 전체 데이터 범위를 유지한다.
 
 ## 9.4 리포트 작성
 
-Admin + 셀리더는 전체 셀에 대해 리포트를 작성할 수 있다.
-다만 기본 선택은 본인에게 배정된 셀로 한다.
+Admin + 셀리더는 Admin 모드에서 전체 셀에 대해 리포트를 작성할 수 있다.
+셀리더 모드에서는 본인에게 배정된 셀에 대해서만 리포트를 작성할 수 있다.
 
 ---
 

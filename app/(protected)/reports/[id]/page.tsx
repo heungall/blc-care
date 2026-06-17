@@ -16,8 +16,9 @@ type ReportMemberRecord = WeeklyMemberRecord & { member_display_name: string };
 
 export default function ReportDetailPage() {
   const params = useParams<{ id: string }>();
-  const { user } = useAuth();
-  const state = useApiData(() => api.getReportDetail(user, params.id), [user.email, params.id]);
+  const { user, leaderMode } = useAuth();
+  const scope = leaderMode ? "leader" : "admin";
+  const state = useApiData(() => api.getReportDetail(user, params.id, { scope }), [user.email, params.id, leaderMode]);
   const [summary, setSummary] = useState("");
   const [records, setRecords] = useState<ReportMemberRecord[]>([]);
   const [message, setMessage] = useState("");
@@ -61,7 +62,7 @@ export default function ReportDetailPage() {
         overall_summary: summary,
         status: report.status === "submitted" ? "submitted" : "draft",
         records,
-      });
+      }, { scope });
       state.setData(saved);
       setMessage("변경 내용을 저장했습니다.");
       setEditing(false);

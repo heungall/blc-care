@@ -30,10 +30,11 @@ const baptismLabels: Record<BaptismStatus, string> = {
 
 export default function MemberDetailPage() {
   const params = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, leaderMode } = useAuth();
   const [editing, setEditing] = useState(false);
-  const state = useApiData(() => api.getMemberDetail(user, params.id), [user.email, params.id]);
-  const cellsState = useApiData(() => api.getCells(user), [user.email]);
+  const scope = leaderMode ? "leader" : "admin";
+  const state = useApiData(() => api.getMemberDetail(user, params.id, { scope }), [user.email, params.id, leaderMode]);
+  const cellsState = useApiData(() => api.getCells(user, { scope }), [user.email, leaderMode]);
 
   if (state.loading) return <><PageHeader title="성도 상세" /><LoadingState /></>;
   if (state.error) return <><PageHeader title="성도 상세" /><ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState></>;
@@ -61,6 +62,7 @@ export default function MemberDetailPage() {
               user={user}
               member={member}
               cells={cellsState.data}
+              scope={scope}
               onCancel={() => setEditing(false)}
               onSaved={(updated) => {
                 state.setData({ ...state.data!, member: updated });

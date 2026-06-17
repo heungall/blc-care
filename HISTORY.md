@@ -1640,3 +1640,85 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * `UI-006` Admin+셀리더 모드의 실제 조회 범위 일치 구현
+
+---
+
+## 2026-06-17 - UI-006 상세·작성 화면 scope 보강
+
+### Summary
+
+* Admin+셀리더의 셀리더 모드 scope를 성도 상세, 성도 수정, 리포트 상세, 리포트 작성 초안, 리포트 저장까지 전달하도록 보강했다.
+* 서버에서 `scope=leader`일 때는 Admin role이 있어도 Admin 전용 수정 우회 권한을 적용하지 않도록 했다.
+* 셀리더 모드에서는 배정 셀 성도와 배정 셀 리포트만 조회·작성·수정할 수 있도록 상세/저장 경로를 맞췄다.
+* data-scope helper에 leader scope와 Admin scope 판정 테스트를 추가했다.
+
+### Changed Files
+
+* `lib/data-scope.ts`
+* `lib/data-scope.test.ts`
+* `lib/api.ts`
+* `app/api/supabase/route.ts`
+* `app/(protected)/members/[id]/page.tsx`
+* `app/(protected)/reports/[id]/page.tsx`
+* `components/member-edit-form.tsx`
+* `components/report-form.tsx`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/05_PERMISSION_RULES.md`
+* `HISTORY.md`
+
+### Reason
+
+* 기존 UI-006 구현이 목록 화면 중심이라 직접 상세 URL 접근, 리포트 작성, 저장·수정 흐름에서 현재 모드와 서버 권한 맥락이 다시 어긋날 수 있었기 때문.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test -- lib/data-scope.test.ts` - 4개 테스트 통과
+* `npm.cmd run test` - 52개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-008` 성도 목록 검색, 필터, 정렬, 페이지네이션 구현
+
+---
+
+## 2026-06-17 - UI-008 성도 목록 검색·필터·페이지네이션
+
+### Summary
+
+* 성도 목록 화면에 이름/별칭 검색, 셀 필터, 상태 필터, 이름 정렬, 페이지네이션을 추가했다.
+* 모바일은 카드형 목록을 유지하고, 데스크톱은 더 조밀한 테이블 목록으로 표시하도록 분리했다.
+* `getMembers` 서버 응답에 페이지네이션 메타데이터를 추가하고, 목록 API가 연락처·주소 등 상세 개인정보를 반환하지 않도록 최소 컬럼 조회로 조정했다.
+* 휴대폰 번호 검색은 성도 목록에서 제공하지 않는 것으로 개인정보 정책과 API 문서에 기록했다.
+
+### Changed Files
+
+* `app/(protected)/members/page.tsx`
+* `app/api/supabase/route.ts`
+* `lib/api.ts`
+* `lib/api.test.ts`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/04_API_SPEC.md`
+* `docs/07_PRIVACY_POLICY.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 성도 수가 늘어날 때 전체 목록을 한 번에 렌더링하지 않고, Admin과 셀리더가 각자의 조회 범위 안에서 빠르게 성도를 찾도록 하기 위함.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test -- lib/api.test.ts` - 2개 테스트 통과
+* `npm.cmd run test` - 53개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-009` 업무 중심 대시보드 보강
