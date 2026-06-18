@@ -5,8 +5,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { AttendanceStatusBadge } from "@/components/attendance-status-badge";
 import { PageHeader } from "@/components/page-header";
+import { ReportDetailSkeleton } from "@/components/skeletons";
 import { ReportStatusBadge } from "@/components/status-badge";
-import { Badge, Button, Card, EmptyState, ErrorState, LinkButton, LoadingState, Select, Textarea } from "@/components/ui";
+import { Badge, Button, Card, EmptyState, ErrorState, LinkButton, Select, Textarea } from "@/components/ui";
 import { useApiData } from "@/hooks/use-api-data";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { attendanceStatusOptions } from "@/lib/attendance";
@@ -34,7 +35,7 @@ export default function ReportDetailPage() {
     }
   }, [state.data]);
 
-  if (state.loading) return <><PageHeader title="리포트 상세" /><LoadingState /></>;
+  if (state.loading) return <><PageHeader title="리포트 상세" /><ReportDetailSkeleton /></>;
   if (state.error) return <><PageHeader title="리포트 상세" /><ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState></>;
   if (!state.data) return <><PageHeader title="리포트 상세" /><EmptyState>조회할 수 있는 리포트가 없습니다.</EmptyState></>;
 
@@ -85,7 +86,7 @@ export default function ReportDetailPage() {
           </div>
         )}
       />
-      <Card>
+      <Card variant={editing ? "input" : "sensitive"}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2"><ReportStatusBadge status={report.status} /><Badge tone={editing ? "primary" : "neutral"}>{editing ? "수정 중" : editable ? "수정 가능" : "읽기 전용"}</Badge></div>
           <p className="text-xs text-slate-400">마지막 수정 {report.updated_at}</p>
@@ -108,7 +109,7 @@ export default function ReportDetailPage() {
           {records.length ? records.map((record) => {
             const hasDetails = Boolean(record.absence_reason || record.sharing_summary || record.prayer_request || record.support_suggestion);
             return (
-              <Card key={record.record_id || record.member_id} className={editing ? "" : "p-4"}>
+              <Card key={record.record_id || record.member_id} variant={editing ? "input" : "sensitive"} padding={editing ? "default" : "compact"}>
                 <div className="flex items-center justify-between gap-3"><h3 className="font-bold">{record.member_display_name}</h3><AttendanceStatusBadge status={record.attendance_status} /></div>
                 {editing ? (
                   <>

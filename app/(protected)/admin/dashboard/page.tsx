@@ -3,7 +3,8 @@
 import { AdminGuard } from "@/components/admin-guard";
 import { useAuth } from "@/components/auth-provider";
 import { PageHeader } from "@/components/page-header";
-import { Badge, Card, ErrorState, LinkButton, LoadingState } from "@/components/ui";
+import { AdminDashboardSkeleton } from "@/components/skeletons";
+import { Badge, Card, ErrorState, LinkButton } from "@/components/ui";
 import { useApiData } from "@/hooks/use-api-data";
 import { api } from "@/lib/api";
 
@@ -23,7 +24,7 @@ export default function AdminDashboardPage() {
   return (
     <AdminGuard>
       <PageHeader title="Admin 대시보드" description="전체 돌봄 현황과 필요한 관리 항목을 확인하세요." action={<LinkButton href="/dashboard" variant="secondary">셀리더 화면</LinkButton>} />
-      {state.loading && <LoadingState />}
+      {state.loading && <AdminDashboardSkeleton />}
       {state.error && <ErrorState onRetry={() => void state.reload()}>{state.error}</ErrorState>}
       {data && (
         <>
@@ -44,5 +45,5 @@ export default function AdminDashboardPage() {
 }
 
 function Metric({ label, value, href, tone = "neutral" }: { label: string; value: string; href: string; tone?: "neutral" | "primary" | "success" | "warning" }) {
-  return <Card><Badge tone={tone}>{label}</Badge><p className="mt-4 text-3xl font-bold">{value}</p><LinkButton href={href} variant="secondary" className="mt-5 w-full">상세 보기</LinkButton></Card>;
+  return <Card variant="summary"><Badge tone={tone}>{label}</Badge><p className="mt-4 text-3xl font-bold">{value}</p><LinkButton href={href} variant="secondary" className="mt-5 w-full">상세 보기</LinkButton></Card>;
 }

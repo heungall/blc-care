@@ -64,7 +64,7 @@ export function MemberEditForm({
 
   return (
     <div className="space-y-5">
-      <Card>
+      <Card variant="input">
         <h2 className="text-lg font-bold">기본 정보 수정</h2>
         <p className="mt-1 text-sm text-slate-500">돌봄에 필요한 범위에서만 정확한 정보를 입력해주세요.</p>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -98,7 +98,7 @@ export function MemberEditForm({
         </div>
       </Card>
 
-      <Card>
+      <Card variant="input">
         <h2 className="text-lg font-bold">소속 및 상태</h2>
         {!isAdmin && <p className="mt-1 text-sm text-slate-500">소속 셀과 상태 변경은 Admin만 할 수 있습니다.</p>}
         <div className="mt-4 grid gap-4 sm:grid-cols-2">

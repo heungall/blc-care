@@ -7,7 +7,7 @@ import type { MemberView } from "@/lib/types";
 export function MemberCard({ member }: { member: MemberView }) {
   return (
     <Link href={`/members/${member.member_id}`} className="focus-ring block rounded-2xl">
-      <Card className="h-full transition hover:border-blue-300 hover:shadow-md">
+      <Card variant="list" padding="compact" className="h-full transition hover:border-blue-300 hover:shadow-md">
         <div className="flex items-start gap-4">
           <MemberAvatar name={member.display_name} />
           <div className="min-w-0 flex-1">

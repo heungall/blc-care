@@ -1722,3 +1722,130 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * `UI-009` 업무 중심 대시보드 보강
+
+---
+
+## 2026-06-18 - UI-009 업무 중심 대시보드 보강
+
+### Summary
+
+* 셀리더 대시보드를 이번 주 리포트 작성 상태, 미해결 특이사항, 장기결석 의심 인원 중심으로 재구성했다.
+* 최근 리포트 항목을 `/reports/[id]` 상세로 이동 가능한 링크로 변경했다.
+* 대시보드 계산 로직을 `lib/dashboard.ts`로 분리하고 이번 주 리포트 누락과 장기결석 의심 기준 테스트를 추가했다.
+* 대시보드에는 기도제목, 나눔 요약, 특이사항 원문을 노출하지 않고 인원 수와 상세 이동만 제공하도록 문서화했다.
+
+### Changed Files
+
+* `app/(protected)/dashboard/page.tsx`
+* `lib/dashboard.ts`
+* `lib/dashboard.test.ts`
+* `docs/03_SCREEN_FLOW.md`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 기존 대시보드가 권한 설명과 단순 카운트 중심이라 셀리더가 바로 처리해야 할 업무를 파악하기 어려웠기 때문.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test -- lib/dashboard.test.ts` - 2개 테스트 통과
+* `npm.cmd run test` - 55개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-010` 화면 맥락에 맞는 스켈레톤
+
+---
+
+## 2026-06-18 - UI-010 화면 맥락형 스켈레톤
+
+### Summary
+
+* 공용 `Skeleton`, `SkeletonPanel` primitive를 추가했다.
+* 성도 목록, 셀리더 대시보드, Admin 대시보드, 리포트 목록, 리포트 상세에 화면 구조와 비슷한 스켈레톤을 적용했다.
+* 스켈레톤은 장식 요소로 숨기고 `role="status"`와 스크린리더 문구로 로딩 상태를 알리도록 했다.
+* 주요 카드·목록 화면은 구조형 스켈레톤을 우선 사용하도록 디자인 문서를 갱신했다.
+
+### Changed Files
+
+* `components/ui.tsx`
+* `components/ui.test.tsx`
+* `components/skeletons.tsx`
+* `app/(protected)/dashboard/page.tsx`
+* `app/(protected)/admin/dashboard/page.tsx`
+* `app/(protected)/members/page.tsx`
+* `app/(protected)/reports/page.tsx`
+* `app/(protected)/reports/[id]/page.tsx`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 단순 문구형 로딩은 카드·목록 화면에서 레이아웃 이동이 크고 실제 화면 맥락을 파악하기 어렵기 때문.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test -- components/ui.test.tsx` - 2개 테스트 통과
+* `npm.cmd run test` - 56개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* `UI-011` 카드 밀도와 정보 위계 정리
+
+---
+
+## 2026-06-18 - UI-011 카드 밀도와 정보 위계 정리
+
+### Summary
+
+* 공용 `Card`에 `summary`, `list`, `input`, `sensitive` 역할과 `compact`, `default`, `spacious` 밀도 옵션을 추가했다.
+* 대시보드 지표는 `summary`, 목록형 카드와 반복 기록은 `list`/`compact`, 작성·수정 폼은 `input`, 기도제목·나눔·특이사항·개인정보 요약은 `sensitive`로 구분했다.
+* 모바일 목록과 반복 기록 카드의 여백을 줄이고, 입력 카드는 터치 여백을 유지하도록 정리했다.
+* 카드 역할과 밀도 기준을 디자인 문서에 기록했다.
+
+### Changed Files
+
+* `components/ui.tsx`
+* `components/ui.test.tsx`
+* `components/member-card.tsx`
+* `components/attendance-overview.tsx`
+* `components/member-content-bulk-input.tsx`
+* `components/member-edit-form.tsx`
+* `components/report-form.tsx`
+* `components/skeletons.tsx`
+* `app/(protected)/dashboard/page.tsx`
+* `app/(protected)/admin/dashboard/page.tsx`
+* `app/(protected)/members/[id]/page.tsx`
+* `app/(protected)/reports/page.tsx`
+* `app/(protected)/reports/[id]/page.tsx`
+* `docs/09_DESIGN_SYSTEM.md`
+* `TODOLIST.md`
+* `HISTORY.md`
+
+### Reason
+
+* 대부분의 카드가 동일한 큰 흰색 박스로 보여 요약, 목록, 입력, 민감 정보의 시각적 역할이 구분되지 않았기 때문.
+
+### Checks
+
+* `npm.cmd run lint` - 통과
+* `npm.cmd run typecheck` - 통과
+* `npm.cmd run test -- components/ui.test.tsx` - 3개 테스트 통과
+* `npm.cmd run test` - 57개 테스트 통과
+* `npm.cmd run build` - 전체 22개 route 생성 완료
+* `git diff --check` - 통과
+
+### TODO
+
+* 다음 UI 보강 항목 선정

@@ -55,7 +55,7 @@ export function AttendanceOverview({
   );
 
   return (
-    <Card>
+    <Card variant="input">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-bold">출결 한눈에 입력</h2>

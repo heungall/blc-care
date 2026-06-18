@@ -73,7 +73,7 @@ export default function MemberDetailPage() {
         </>
       ) : (
         <div className="space-y-5">
-          <Card>
+          <Card variant="sensitive">
             <div className="flex items-center gap-4">
               <MemberAvatar name={member.display_name} size="lg" />
               <div className="min-w-0 flex-1">
@@ -127,8 +127,8 @@ export default function MemberDetailPage() {
           </Card>
 
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card><h2 className="text-lg font-bold">최근 돌봄 기록</h2><div className="mt-4 space-y-3">{history.records.length ? history.records.map((record) => <div key={record.record_id} className="rounded-xl bg-slate-50 p-4"><AttendanceStatusBadge status={record.attendance_status} /><p className="mt-3 text-sm text-slate-600">{record.sharing_summary}</p><p className="mt-2 text-sm text-slate-500">{record.prayer_request}</p></div>) : <p className="text-sm text-slate-500">아직 기록이 없습니다.</p>}</div></Card>
-            <Card><h2 className="text-lg font-bold">특이사항</h2><div className="mt-4 space-y-3">{history.notes.length ? history.notes.map((note) => <div key={note.note_id} className="rounded-xl bg-slate-50 p-4"><div className="flex justify-between gap-3"><Badge tone={note.resolved ? "success" : "warning"}>{note.resolved ? "해결" : "확인 필요"}</Badge><span className="text-xs text-slate-400">{note.recorded_date}</span></div><p className="mt-3 text-sm text-slate-600">{note.note}</p></div>) : <p className="text-sm text-slate-500">표시할 특이사항이 없습니다.</p>}</div></Card>
+            <Card variant="sensitive" padding="compact"><h2 className="text-lg font-bold">최근 돌봄 기록</h2><div className="mt-4 space-y-3">{history.records.length ? history.records.map((record) => <div key={record.record_id} className="rounded-xl bg-white/80 p-3"><AttendanceStatusBadge status={record.attendance_status} /><p className="mt-3 text-sm text-slate-600">{record.sharing_summary}</p><p className="mt-2 text-sm text-slate-500">{record.prayer_request}</p></div>) : <p className="text-sm text-slate-500">아직 기록이 없습니다.</p>}</div></Card>
+            <Card variant="sensitive" padding="compact"><h2 className="text-lg font-bold">특이사항</h2><div className="mt-4 space-y-3">{history.notes.length ? history.notes.map((note) => <div key={note.note_id} className="rounded-xl bg-white/80 p-3"><div className="flex justify-between gap-3"><Badge tone={note.resolved ? "success" : "warning"}>{note.resolved ? "해결" : "확인 필요"}</Badge><span className="text-xs text-slate-400">{note.recorded_date}</span></div><p className="mt-3 text-sm text-slate-600">{note.note}</p></div>) : <p className="text-sm text-slate-500">표시할 특이사항이 없습니다.</p>}</div></Card>
           </div>
         </div>
       )}

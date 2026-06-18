@@ -43,7 +43,7 @@ export function MemberContentBulkInput({
   };
 
   return (
-    <Card>
+    <Card variant="input">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">{contentLabel} 일괄 입력</h2>

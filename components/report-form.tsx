@@ -161,7 +161,7 @@ export function ReportForm() {
         </li>
       </ol>
 
-      <Card>
+      <Card variant="input">
         <h2 className="text-lg font-bold">리포트 기본 정보</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <label className="text-sm font-semibold">셀<Select className="mt-2" value={cellId} onChange={(event) => changeCell(event.target.value)}>{cells.map((cell) => <option key={cell.cell_id} value={cell.cell_id}>{cell.cell_name}</option>)}</Select></label>
@@ -182,7 +182,7 @@ export function ReportForm() {
             />
           ) : (
             <>
-              <Card>
+              <Card variant="summary" padding="compact">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-lg font-bold">출결 입력 결과</h2>
@@ -195,7 +195,7 @@ export function ReportForm() {
                   <Button type="button" variant="secondary" onClick={() => setStep("attendance")}>출결 수정</Button>
                 </div>
               </Card>
-              <Card>
+              <Card variant="input">
                 <h2 className="text-lg font-bold">전체 나눔 요약</h2>
                 <label className="mt-4 block text-sm font-semibold">요약 내용<Textarea className="mt-2 min-h-24" value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="민감한 내용을 과하게 자세히 적지 않도록 확인해주세요." /></label>
               </Card>
@@ -210,7 +210,7 @@ export function ReportForm() {
                   {detailMembers.map((member) => {
                     const record = getMemberRecord(member.member_id);
                     return (
-                      <Card key={member.member_id}>
+                      <Card key={member.member_id} variant="input" padding="compact">
                         <div className="flex items-center justify-between gap-3">
                           <h3 className="font-bold">{member.display_name}</h3>
                           <AttendanceStatusBadge status={record?.attendance_status ?? "unknown"} />
@@ -224,7 +224,7 @@ export function ReportForm() {
                 </div>
               </section>
               {optionalDetailMembers.length > 0 && (
-                <Card>
+                <Card variant="list" padding="compact">
                   <h2 className="text-base font-bold">비출석 인원 기록 추가</h2>
                   <p className="mt-1 text-sm text-slate-500">나중에 기록이 필요한 사람만 선택해주세요.</p>
                   <div className="mt-3 flex flex-wrap gap-2">

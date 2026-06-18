@@ -5,10 +5,11 @@ import { useState } from "react";
 import { useApiData } from "@/hooks/use-api-data";
 import { MemberAvatar } from "@/components/member-avatar";
 import { MemberCard } from "@/components/member-card";
+import { MemberListSkeleton } from "@/components/skeletons";
 import { MemberStatusBadge } from "@/components/status-badge";
 import { useAuth } from "@/components/auth-provider";
 import { PageHeader } from "@/components/page-header";
-import { Button, EmptyState, ErrorState, Input, LoadingState, Select } from "@/components/ui";
+import { Button, EmptyState, ErrorState, Input, Select } from "@/components/ui";
 import { api } from "@/lib/api";
 import type { MemberStatus } from "@/lib/types";
 
@@ -93,7 +94,7 @@ export default function MembersPage() {
           <option value="name_desc">이름 내림차순</option>
         </Select>
       </div>
-      {(cellsState.loading || membersState.loading) && <LoadingState />}
+      {(cellsState.loading || membersState.loading) && <MemberListSkeleton />}
       {(cellsState.error || membersState.error) && <ErrorState onRetry={() => { void cellsState.reload(); void membersState.reload(); }}>{cellsState.error || membersState.error}</ErrorState>}
       {!cellsState.loading && !membersState.loading && !cellsState.error && !membersState.error && (
         members.length ? (

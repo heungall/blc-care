@@ -8,8 +8,34 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>{children}</section>;
+type CardVariant = "default" | "summary" | "list" | "input" | "sensitive";
+type CardPadding = "none" | "compact" | "default" | "spacious";
+
+export function Card({
+  children,
+  className = "",
+  variant = "default",
+  padding = "default",
+}: {
+  children: ReactNode;
+  className?: string;
+  variant?: CardVariant;
+  padding?: CardPadding;
+}) {
+  const variants: Record<CardVariant, string> = {
+    default: "border-slate-200 bg-white shadow-sm",
+    summary: "border-blue-100 bg-white shadow-sm",
+    list: "border-slate-200 bg-white shadow-sm",
+    input: "border-blue-100 bg-white shadow-sm",
+    sensitive: "border-slate-200 bg-slate-50/70 shadow-sm",
+  };
+  const paddings: Record<CardPadding, string> = {
+    none: "",
+    compact: "p-4",
+    default: "p-4 sm:p-5",
+    spacious: "p-5 sm:p-6",
+  };
+  return <section className={`rounded-2xl border ${variants[variant]} ${paddings[padding]} ${className}`}>{children}</section>;
 }
 
 export function Badge({
@@ -90,6 +116,19 @@ export function EmptyState({ children }: { children: ReactNode }) {
 
 export function LoadingState({ children = "정보를 불러오는 중입니다." }: { children?: ReactNode }) {
   return <div className="rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center text-sm text-slate-500">{children}</div>;
+}
+
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded-xl bg-slate-200/80 ${className}`} aria-hidden="true" />;
+}
+
+export function SkeletonPanel({ children, label = "정보를 불러오는 중입니다." }: { children: ReactNode; label?: string }) {
+  return (
+    <div role="status" aria-label={label}>
+      <span className="sr-only">{label}</span>
+      {children}
+    </div>
+  );
 }
 
 export function ErrorState({ children, onRetry }: { children: ReactNode; onRetry?: () => void }) {
