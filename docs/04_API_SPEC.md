@@ -359,13 +359,13 @@ Apps Script Web App 특성상 클라이언트는 HTTP 상태 코드만 의존하
   },
   "data": {
     "cell_id": "cell_sample",
-    "week_start_date": "2026-06-08"
+    "week_start_date": "2026-06-07"
   }
 }
 ```
 
-- `week_start_date`를 생략하면 현재 날짜가 포함된 월요일~일요일 주차를 사용한다.
-- `week_start_date`를 입력하면 월요일이어야 한다.
+- `week_start_date`를 생략하면 현재 날짜가 포함된 일요일~토요일 주차를 사용한다.
+- `week_start_date`를 입력하면 일요일이어야 한다.
 - 동일 `cell_id + week_start_date` 리포트가 있으면 기존 기록을 불러온다.
 - 기존 기록은 모두 유지하고, 현재 활동 성도 중 기록이 없는 성도는 `attendance_status = unknown` 기본 기록으로 추가한다.
 - `is_existing`, `report`, `members`, `records`, `can_edit`을 반환한다.
@@ -380,8 +380,8 @@ Apps Script Web App 특성상 클라이언트는 HTTP 상태 코드만 의존하
   },
   "data": {
     "cell_id": "cell_sample",
-    "week_start_date": "2026-06-08",
-    "report_date": "2026-06-14",
+    "week_start_date": "2026-06-07",
+    "report_date": "2026-06-13",
     "overall_summary": "샘플 모임 요약",
     "status": "submitted",
     "records": [
@@ -400,7 +400,7 @@ Apps Script Web App 특성상 클라이언트는 HTTP 상태 코드만 의존하
 
 ### 12.1 저장 및 권한 규칙
 
-- `week_start_date`는 월요일이어야 하며 `report_date`는 해당 주차 안이어야 한다.
+- `week_start_date`는 일요일이어야 하며 `report_date`는 해당 주차 안이어야 한다.
 - Admin은 전체 셀 리포트와 잠긴 리포트를 수정할 수 있다.
 - 새 리포트는 활성 셀에만 생성한다. 이미 존재하는 비활성 셀 리포트는 Admin이 수정할 수 있다.
 - 셀리더는 현재 활성 배정 셀의 해당 주차 리포트만 생성·수정할 수 있다.

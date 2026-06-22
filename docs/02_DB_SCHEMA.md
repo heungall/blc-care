@@ -687,7 +687,7 @@ Admin은 이 정보를 확인한 뒤 성도 DB로 전환할 수 있다.
 | church_name              | Bluelight 홍대교회 | 교회명             |
 | app_name                 | BLC Care       | 앱 이름            |
 | long_absence_months      | 3              | 장기결석 기준 개월 수    |
-| report_edit_deadline_day | Sunday         | 리포트 수정 가능 마감 요일 |
+| report_edit_deadline_day | Saturday       | 리포트 수정 가능 마감 요일 |
 | timezone                 | Asia/Seoul     | 기준 시간대          |
 
 ---
@@ -854,7 +854,7 @@ audit_logs
 | church_name              | Bluelight 홍대교회 | 교회명          |
 | app_name                 | BLC Care       | 앱 이름         |
 | long_absence_months      | 3              | 장기결석 기준      |
-| report_edit_deadline_day | Sunday         | 리포트 수정 가능 마감 |
+| report_edit_deadline_day | Saturday       | 리포트 수정 가능 마감 |
 | timezone                 | Asia/Seoul     | 기준 시간대       |
 
 ---

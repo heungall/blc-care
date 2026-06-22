@@ -1849,3 +1849,42 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 ### TODO
 
 * 다음 UI 보강 항목 선정
+
+---
+
+## 2026-06-22 - 주차 기준 일요일~토요일 변경
+
+### Summary
+
+* 주차 계산 helper가 일요일부터 토요일까지의 범위를 반환하도록 변경했다.
+* 리포트 작성, 대시보드 누락 리포트 판단, mock 리포트 데이터, 장기결석 테스트 기대값을 새 주차 기준에 맞췄다.
+* API, 권한, DB 기본 설정 문서의 주차 기준과 리포트 수정 마감 기본값을 갱신했다.
+
+### Changed Files
+
+* `lib/date.ts`
+* `lib/date.test.ts`
+* `lib/dashboard.test.ts`
+* `lib/absence.test.ts`
+* `lib/mock-data.ts`
+* `docs/02_DB_SCHEMA.md`
+* `docs/04_API_SPEC.md`
+* `docs/05_PERMISSION_RULES.md`
+* `HISTORY.md`
+
+### Reason
+
+* 리포트 주차 표기가 일요일~토요일 기준으로 보여야 하며, 표시와 저장 기준이 서로 어긋나지 않도록 공용 주차 계산 기준을 맞추기 위함.
+
+### Checks
+
+* `npm.cmd run lint`
+* `npm.cmd run typecheck`
+* `npm.cmd run test`
+* `git diff --check`
+
+### TODO
+
+* 없음
+
+---

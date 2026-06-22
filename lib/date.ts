@@ -41,9 +41,8 @@ export function addMonths(value: DateString, months: number): DateString {
 
 export function getWeekRange(value: DateString): { week_start_date: DateString; week_end_date: DateString } {
   const date = parseDateString(value);
-  const day = date.getUTCDay();
-  const daysFromMonday = day === 0 ? 6 : day - 1;
-  const week_start_date = addDays(value, -daysFromMonday);
+  const daysFromSunday = date.getUTCDay();
+  const week_start_date = addDays(value, -daysFromSunday);
   return { week_start_date, week_end_date: addDays(week_start_date, 6) };
 }
 

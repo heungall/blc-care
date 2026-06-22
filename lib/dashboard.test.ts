@@ -10,8 +10,8 @@ const cells = [
 describe("dashboard work item helpers", () => {
   it("marks cells without this week report as missing", () => {
     const items = getWeeklyReportWorkItems(cells, [
-      { report_id: "report_a", cell_id: "cell_a", week_start_date: "2026-06-15", status: "submitted" },
-      { report_id: "old_report_b", cell_id: "cell_b", week_start_date: "2026-06-08", status: "submitted" },
+      { report_id: "report_a", cell_id: "cell_a", week_start_date: "2026-06-14", status: "submitted" },
+      { report_id: "old_report_b", cell_id: "cell_b", week_start_date: "2026-06-07", status: "submitted" },
     ], "2026-06-18");
 
     expect(items).toEqual([

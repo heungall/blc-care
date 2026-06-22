@@ -8,10 +8,14 @@ import {
 } from "@/lib/date";
 
 describe("date helpers", () => {
-  it("calculates a Monday to Sunday week", () => {
+  it("calculates a Sunday to Saturday week", () => {
     expect(getWeekRange("2026-06-12")).toEqual({
-      week_start_date: "2026-06-08",
-      week_end_date: "2026-06-14",
+      week_start_date: "2026-06-07",
+      week_end_date: "2026-06-13",
+    });
+    expect(getWeekRange("2026-06-14")).toEqual({
+      week_start_date: "2026-06-14",
+      week_end_date: "2026-06-20",
     });
   });
 

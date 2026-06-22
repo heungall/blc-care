@@ -6,7 +6,7 @@ const records = mockReports.flatMap((report) => report.records);
 
 describe("long absence helpers", () => {
   it("finds the latest present attendance date", () => {
-    expect(getLatestAttendanceDate("member_a1", records)).toBe("2026-06-07");
+    expect(getLatestAttendanceDate("member_a1", records)).toBe("2026-06-06");
   });
 
   it("uses registration date when a member has no present record", () => {
