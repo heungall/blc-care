@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { PageHeader } from "@/components/page-header";
 import { Button, EmptyState, ErrorState, LoadingState, Select } from "@/components/ui";
@@ -17,10 +17,16 @@ export default function AttendancePage() {
   const currentYM = getTodayInTimeZone().slice(0, 7);
   const [startMonth, setStartMonth] = useState(prevYM(currentYM));
   const [editingCell, setEditingCell] = useState<{ memberId: string; week: string } | null>(null);
+  const [paintStatus, setPaintStatus] = useState<AttendanceStatus | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const scope = leaderMode ? "leader" : "admin";
   const isAdmin = hasRole(user, "admin");
+
+  const isDraggingRef = useRef(false);
+  const pendingRef = useRef(new Map<string, { memberId: string; week: string }>());
+  const paintStatusRef = useRef<AttendanceStatus | null>(null);
+  useEffect(() => { paintStatusRef.current = paintStatus; }, [paintStatus]);
 
   const endMonth = nextYM(startMonth);
   const fromDate = `${startMonth}-01`;
@@ -43,7 +49,64 @@ export default function AttendancePage() {
   const loading = cellsState.loading || sheetState.loading;
   const loadError = cellsState.error || sheetState.error;
 
-  const handleSetStatus = async (memberId: string, week: string, status: AttendanceStatus) => {
+  const applyPaint = useCallback((memberId: string, week: string) => {
+    if (!paintStatusRef.current) return;
+    const key = `${memberId}:${week}`;
+    pendingRef.current.set(key, { memberId, week });
+    const status = paintStatusRef.current;
+    sheetState.setData((current) => current ? {
+      ...current,
+      members: current.members.map((m) =>
+        m.member_id === memberId ? { ...m, attendance: { ...m.attendance, [week]: status } } : m,
+      ),
+    } : current);
+  }, [sheetState]);
+
+  const flushPending = useCallback(async () => {
+    const updates = [...pendingRef.current.values()];
+    pendingRef.current.clear();
+    const status = paintStatusRef.current;
+    if (!updates.length || !status) return;
+    setSaving(true);
+    setError("");
+    try {
+      await api.setAttendanceRecordBatch(user, updates.map((u) => ({
+        member_id: u.memberId, week_start_date: u.week, attendance_status: status,
+      })));
+    } catch (e) {
+      setError(getApiErrorMessage(e));
+      void sheetState.reload();
+    } finally {
+      setSaving(false);
+    }
+  }, [user, sheetState]);
+
+  useEffect(() => {
+    const onMouseUp = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      void flushPending();
+    };
+    window.addEventListener("mouseup", onMouseUp);
+    return () => window.removeEventListener("mouseup", onMouseUp);
+  }, [flushPending]);
+
+  const handleCellMouseDown = (memberId: string, week: string) => {
+    if (!paintStatus) {
+      const isEditing = editingCell?.memberId === memberId && editingCell?.week === week;
+      setEditingCell(isEditing ? null : { memberId, week });
+      return;
+    }
+    isDraggingRef.current = true;
+    applyPaint(memberId, week);
+  };
+
+  const handleCellMouseEnter = (memberId: string, week: string) => {
+    if (!isDraggingRef.current || !paintStatus) return;
+    applyPaint(memberId, week);
+  };
+
+  const handleSingleSet = async (memberId: string, week: string, status: AttendanceStatus) => {
     setSaving(true);
     setError("");
     try {
@@ -77,13 +140,35 @@ export default function AttendancePage() {
         </div>
       </div>
 
+      {isAdmin && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3">
+          <span className="text-sm font-semibold text-slate-600">출석 지정:</span>
+          {attendanceStatusOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`flex size-9 items-center justify-center rounded-full text-sm font-bold transition ${statusStyle(opt.value)} ${paintStatus === opt.value ? "ring-2 ring-blue-500 ring-offset-2" : "hover:ring-2 hover:ring-blue-300"}`}
+              title={`${opt.label} — 선택 후 셀을 클릭하거나 드래그하세요`}
+              onClick={() => { setPaintStatus(paintStatus === opt.value ? null : opt.value); setEditingCell(null); }}
+            >
+              {opt.marker}
+            </button>
+          ))}
+          {paintStatus && (
+            <Button type="button" variant="ghost" className="ml-2 text-xs" onClick={() => setPaintStatus(null)}>해제</Button>
+          )}
+          {paintStatus && <span className="ml-2 text-xs text-blue-600">클릭 또는 드래그로 적용</span>}
+          {saving && <span className="ml-2 text-xs text-slate-400">저장 중...</span>}
+        </div>
+      )}
+
       {error && <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
       {loading && <LoadingState>출석 데이터를 불러오는 중입니다.</LoadingState>}
       {loadError && <ErrorState onRetry={() => { void cellsState.reload(); void sheetState.reload(); }}>{loadError}</ErrorState>}
 
       {!loading && !loadError && (
         members.length ? (
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className={`overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm ${paintStatus ? "select-none" : ""}`}>
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold tracking-wide text-slate-500">
                 <tr>
@@ -99,16 +184,17 @@ export default function AttendancePage() {
                     <td className="px-3 py-2.5 font-semibold whitespace-nowrap">{m.display_name}</td>
                     {weeks.map((w) => {
                       const s = m.attendance[w] as AttendanceStatus | undefined;
-                      const isEditing = editingCell?.memberId === m.member_id && editingCell?.week === w;
+                      const isEditing = !paintStatus && editingCell?.memberId === m.member_id && editingCell?.week === w;
                       return (
                         <td key={w} className="relative px-2 py-2.5 text-center">
                           {isAdmin ? (
                             <button
                               type="button"
-                              className="focus-ring inline-flex size-7 items-center justify-center rounded-full text-xs font-bold transition hover:ring-2 hover:ring-blue-300 disabled:opacity-50"
+                              className={`focus-ring inline-flex size-7 items-center justify-center rounded-full text-xs font-bold transition hover:ring-2 hover:ring-blue-300 disabled:opacity-50 ${paintStatus ? "cursor-crosshair" : ""}`}
                               disabled={saving}
-                              onClick={() => setEditingCell(isEditing ? null : { memberId: m.member_id, week: w })}
-                              title={s ? getAttendanceStatusLabel(s) : "기록 없음 — 클릭하여 지정"}
+                              onMouseDown={(e) => { e.preventDefault(); handleCellMouseDown(m.member_id, w); }}
+                              onMouseEnter={() => handleCellMouseEnter(m.member_id, w)}
+                              title={s ? getAttendanceStatusLabel(s) : "기록 없음"}
                             >
                               {s ? (
                                 <span className={`inline-flex size-7 items-center justify-center rounded-full ${statusStyle(s)}`}>
@@ -129,7 +215,7 @@ export default function AttendancePage() {
                           )}
                           {isEditing && (
                             <StatusPicker
-                              onSelect={(status) => void handleSetStatus(m.member_id, w, status)}
+                              onSelect={(status) => void handleSingleSet(m.member_id, w, status)}
                               onClose={() => setEditingCell(null)}
                             />
                           )}
@@ -150,7 +236,6 @@ export default function AttendancePage() {
         <Legend marker="!" label="사유 결석" className="bg-amber-100 text-amber-800" />
         <Legend marker="?" label="미확인" className="bg-slate-100 text-slate-600" />
         <span><span className="inline-flex size-5 items-center justify-center text-slate-300">–</span> 기록 없음</span>
-        {isAdmin && <span className="text-blue-600">· 셀을 클릭하여 출석 상태를 지정할 수 있습니다</span>}
       </div>
     </>
   );

@@ -264,6 +264,10 @@ export const api = {
     supabaseRequest<{ member_id: string; week_start_date: string; attendance_status: string }>(
       "setAttendanceRecord", { member_id: memberId, week_start_date: weekStartDate, attendance_status: attendanceStatus },
     ),
+  setAttendanceRecordBatch: (user: User, records: Array<{ member_id: string; week_start_date: string; attendance_status: string }>) =>
+    supabaseRequest<{ records: Array<{ member_id: string; week_start_date: string; attendance_status: string }> }>(
+      "setAttendanceRecordBatch", { records },
+    ),
   reassignMemberCell: (user: User, memberId: string, cellId: string) =>
     supabaseRequest<{ member_id: string; cell_id: string }>("reassignMemberCell", { member_id: memberId, cell_id: cellId }),
   getAttendanceSheet: (user: User, data: { cell_id?: string; from_date: string; to_date: string } & ScopeOptions) =>

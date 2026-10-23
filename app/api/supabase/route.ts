@@ -155,6 +155,10 @@ export async function POST(request: Request) {
         requireAdmin(isAdmin);
         return setAttendanceRecord(admin, user, data);
       }
+      case "setAttendanceRecordBatch": {
+        requireAdmin(isAdmin);
+        return setAttendanceRecordBatch(admin, user, data);
+      }
       case "reassignMemberCell": {
         requireAdmin(isAdmin);
         return reassignMemberCell(admin, user, data);
@@ -491,6 +495,46 @@ async function setAttendanceRecord(admin: any, user: AppUser, data: Record<strin
   }, { onConflict: "report_id,member_id" });
   if (error) throw error;
   return success({ member_id: memberId, week_start_date: week.week_start_date, attendance_status: attendanceStatus });
+}
+
+async function setAttendanceRecordBatch(admin: any, user: AppUser, data: Record<string, unknown>) {
+  const records = data.records as Array<{ member_id: string; week_start_date: string; attendance_status: string }>;
+  if (!Array.isArray(records) || !records.length) throw new ActionError("BAD_REQUEST", "records가 필요합니다.", 400);
+  const memberIds = [...new Set(records.map((r) => r.member_id))];
+  const { data: members, error: membersError } = await admin.from("members").select("member_id,current_cell_id").in("member_id", memberIds);
+  if (membersError) throw membersError;
+  const memberCellMap = new Map((members ?? []).map((m: any) => [m.member_id, m.current_cell_id]));
+  const reportCache = new Map<string, string>();
+  for (const record of records) {
+    const cellId = memberCellMap.get(record.member_id);
+    if (!cellId) continue;
+    const week = getWeekRange(record.week_start_date);
+    const key = `${cellId}:${week.week_start_date}`;
+    if (reportCache.has(key)) continue;
+    const { data: existing } = await admin.from("weekly_cell_reports").select("report_id").eq("cell_id", cellId).eq("week_start_date", week.week_start_date).maybeSingle();
+    if (existing) { reportCache.set(key, existing.report_id); continue; }
+    const { data: newReport, error: reportError } = await admin.from("weekly_cell_reports").insert({
+      cell_id: cellId, week_start_date: week.week_start_date, week_end_date: week.week_end_date,
+      leader_user_id: user.user_id, status: "draft",
+    }).select("report_id").single();
+    if (reportError) throw reportError;
+    reportCache.set(key, newReport.report_id);
+  }
+  const rows = records.map((record) => {
+    const cellId = memberCellMap.get(record.member_id)!;
+    const week = getWeekRange(record.week_start_date);
+    const key = `${cellId}:${week.week_start_date}`;
+    return {
+      report_id: reportCache.get(key)!, member_id: record.member_id, cell_id: cellId,
+      week_start_date: week.week_start_date, attendance_status: record.attendance_status,
+      created_by: user.user_id, updated_by: user.user_id,
+    };
+  }).filter((r) => r.report_id);
+  if (rows.length) {
+    const { error } = await admin.from("weekly_member_records").upsert(rows, { onConflict: "report_id,member_id" });
+    if (error) throw error;
+  }
+  return success({ records: rows.map((r) => ({ member_id: r.member_id, week_start_date: r.week_start_date, attendance_status: r.attendance_status })) });
 }
 
 async function reassignMemberCell(admin: any, user: AppUser, data: Record<string, unknown>) {
