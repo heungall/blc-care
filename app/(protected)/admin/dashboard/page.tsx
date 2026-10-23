@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { AdminGuard } from "@/components/admin-guard";
 import { useAuth } from "@/components/auth-provider";
 import { PageHeader } from "@/components/page-header";
@@ -20,6 +22,16 @@ export default function AdminDashboardPage() {
     return { members, reports, newcomers, cells };
   }, [user.email]);
   const data = state.data;
+  const [expandedCells, setExpandedCells] = useState<Set<string>>(new Set());
+
+  const toggleCell = (cellId: string) => {
+    setExpandedCells((current) => {
+      const next = new Set(current);
+      if (next.has(cellId)) next.delete(cellId);
+      else next.add(cellId);
+      return next;
+    });
+  };
 
   return (
     <AdminGuard>
@@ -36,7 +48,40 @@ export default function AdminDashboardPage() {
           </div>
           <Card className="mt-5">
             <div className="flex items-center justify-between"><h2 className="text-lg font-bold">셀별 인원</h2><Badge tone="neutral">전체 {data.cells.length}개 셀</Badge></div>
-            <div className="mt-4 space-y-3">{data.cells.map((cell) => <div key={cell.cell_id} className="flex items-center justify-between rounded-xl bg-slate-50 p-4"><span className="font-semibold">{cell.cell_name}</span><span className="text-sm text-slate-500">{data.members.filter((member) => member.current_cell_id === cell.cell_id).length}명</span></div>)}</div>
+            <div className="mt-4 divide-y divide-slate-100">
+              {data.cells.map((cell) => {
+                const cellMembers = data.members.filter((member) => member.current_cell_id === cell.cell_id);
+                const expanded = expandedCells.has(cell.cell_id);
+                return (
+                  <div key={cell.cell_id}>
+                    <button
+                      type="button"
+                      className="focus-ring flex w-full items-center justify-between rounded-xl px-4 py-3 transition hover:bg-slate-50"
+                      onClick={() => toggleCell(cell.cell_id)}
+                    >
+                      <span className="font-semibold">{cell.cell_name}</span>
+                      <span className="text-sm text-slate-500">{cellMembers.length}명 {expanded ? "▲" : "▼"}</span>
+                    </button>
+                    {expanded && (
+                      <div className="mb-3 ml-4 mr-4 rounded-lg border border-slate-100 bg-slate-50/50 divide-y divide-slate-100">
+                        {cellMembers.length ? cellMembers.map((member) => (
+                          <Link
+                            key={member.member_id}
+                            href={`/members/${member.member_id}`}
+                            className="focus-ring flex items-center justify-between px-4 py-2.5 text-sm transition hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg"
+                          >
+                            <span className="font-semibold text-slate-700">{member.display_name}</span>
+                            <span className="text-xs text-slate-400">{member.last_attendance_date ? `최근 ${member.last_attendance_date}` : "출석 기록 없음"}</span>
+                          </Link>
+                        )) : (
+                          <p className="px-4 py-4 text-center text-sm text-slate-400">소속 셀원이 없습니다.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </Card>
         </>
       )}
