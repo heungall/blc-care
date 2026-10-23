@@ -5,9 +5,10 @@ import { useAuth } from "@/components/auth-provider";
 import { PageHeader } from "@/components/page-header";
 import { Button, EmptyState, ErrorState, LoadingState, Select } from "@/components/ui";
 import { useApiData } from "@/hooks/use-api-data";
-import { api } from "@/lib/api";
-import { getAttendanceStatusLabel, getAttendanceStatusMarker } from "@/lib/attendance";
+import { api, getApiErrorMessage } from "@/lib/api";
+import { attendanceStatusOptions, getAttendanceStatusLabel, getAttendanceStatusMarker } from "@/lib/attendance";
 import { formatDateString, getTodayInTimeZone, parseDateString } from "@/lib/date";
+import { hasRole } from "@/lib/permissions";
 import type { AttendanceStatus } from "@/lib/types";
 
 export default function AttendancePage() {
@@ -15,7 +16,11 @@ export default function AttendancePage() {
   const [cellId, setCellId] = useState("all");
   const currentYM = getTodayInTimeZone().slice(0, 7);
   const [startMonth, setStartMonth] = useState(prevYM(currentYM));
+  const [editingCell, setEditingCell] = useState<{ memberId: string; week: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const scope = leaderMode ? "leader" : "admin";
+  const isAdmin = hasRole(user, "admin");
 
   const endMonth = nextYM(startMonth);
   const fromDate = `${startMonth}-01`;
@@ -31,9 +36,31 @@ export default function AttendancePage() {
   }), [user.email, leaderMode, cellId, fromDate, toDate]);
 
   const cells = cellsState.data ?? [];
-  const members = sheetState.data?.members ?? [];
+  const members = [...(sheetState.data?.members ?? [])].sort((a, b) => {
+    const c = a.cell_name.localeCompare(b.cell_name, "ko");
+    return c !== 0 ? c : a.display_name.localeCompare(b.display_name, "ko");
+  });
   const loading = cellsState.loading || sheetState.loading;
-  const error = cellsState.error || sheetState.error;
+  const loadError = cellsState.error || sheetState.error;
+
+  const handleSetStatus = async (memberId: string, week: string, status: AttendanceStatus) => {
+    setSaving(true);
+    setError("");
+    try {
+      await api.setAttendanceRecord(user, memberId, week, status);
+      sheetState.setData((current) => current ? {
+        ...current,
+        members: current.members.map((m) =>
+          m.member_id === memberId ? { ...m, attendance: { ...m.attendance, [week]: status } } : m,
+        ),
+      } : current);
+    } catch (e) {
+      setError(getApiErrorMessage(e));
+    } finally {
+      setSaving(false);
+      setEditingCell(null);
+    }
+  };
 
   return (
     <>
@@ -50,10 +77,11 @@ export default function AttendancePage() {
         </div>
       </div>
 
+      {error && <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
       {loading && <LoadingState>출석 데이터를 불러오는 중입니다.</LoadingState>}
-      {error && <ErrorState onRetry={() => { void cellsState.reload(); void sheetState.reload(); }}>{error}</ErrorState>}
+      {loadError && <ErrorState onRetry={() => { void cellsState.reload(); void sheetState.reload(); }}>{loadError}</ErrorState>}
 
-      {!loading && !error && (
+      {!loading && !loadError && (
         members.length ? (
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
@@ -71,14 +99,39 @@ export default function AttendancePage() {
                     {cellId === "all" && <td className="px-3 py-2.5 text-xs text-slate-500 whitespace-nowrap">{m.cell_name}</td>}
                     {weeks.map((w) => {
                       const s = m.attendance[w] as AttendanceStatus | undefined;
+                      const isEditing = editingCell?.memberId === m.member_id && editingCell?.week === w;
                       return (
-                        <td key={w} className="px-2 py-2.5 text-center">
-                          {s ? (
-                            <span className={`inline-flex size-7 items-center justify-center rounded-full text-xs font-bold ${statusStyle(s)}`} title={getAttendanceStatusLabel(s)}>
-                              {getAttendanceStatusMarker(s)}
-                            </span>
+                        <td key={w} className="relative px-2 py-2.5 text-center">
+                          {isAdmin ? (
+                            <button
+                              type="button"
+                              className="focus-ring inline-flex size-7 items-center justify-center rounded-full text-xs font-bold transition hover:ring-2 hover:ring-blue-300 disabled:opacity-50"
+                              disabled={saving}
+                              onClick={() => setEditingCell(isEditing ? null : { memberId: m.member_id, week: w })}
+                              title={s ? getAttendanceStatusLabel(s) : "기록 없음 — 클릭하여 지정"}
+                            >
+                              {s ? (
+                                <span className={`inline-flex size-7 items-center justify-center rounded-full ${statusStyle(s)}`}>
+                                  {getAttendanceStatusMarker(s)}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300">–</span>
+                              )}
+                            </button>
                           ) : (
-                            <span className="text-slate-300">–</span>
+                            s ? (
+                              <span className={`inline-flex size-7 items-center justify-center rounded-full text-xs font-bold ${statusStyle(s)}`} title={getAttendanceStatusLabel(s)}>
+                                {getAttendanceStatusMarker(s)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">–</span>
+                            )
+                          )}
+                          {isEditing && (
+                            <StatusPicker
+                              onSelect={(status) => void handleSetStatus(m.member_id, w, status)}
+                              onClose={() => setEditingCell(null)}
+                            />
                           )}
                         </td>
                       );
@@ -97,6 +150,28 @@ export default function AttendancePage() {
         <Legend marker="!" label="사유 결석" className="bg-amber-100 text-amber-800" />
         <Legend marker="?" label="미확인" className="bg-slate-100 text-slate-600" />
         <span><span className="inline-flex size-5 items-center justify-center text-slate-300">–</span> 기록 없음</span>
+        {isAdmin && <span className="text-blue-600">· 셀을 클릭하여 출석 상태를 지정할 수 있습니다</span>}
+      </div>
+    </>
+  );
+}
+
+function StatusPicker({ onSelect, onClose }: { onSelect: (s: AttendanceStatus) => void; onClose: () => void }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-20" onClick={onClose} />
+      <div className="absolute left-1/2 top-full z-30 mt-1 -translate-x-1/2 flex gap-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
+        {attendanceStatusOptions.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            className={`flex size-8 items-center justify-center rounded-full text-xs font-bold transition hover:ring-2 hover:ring-blue-300 ${statusStyle(opt.value)}`}
+            title={opt.label}
+            onClick={() => onSelect(opt.value)}
+          >
+            {opt.marker}
+          </button>
+        ))}
       </div>
     </>
   );

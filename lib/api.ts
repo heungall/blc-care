@@ -260,6 +260,10 @@ export const api = {
     supabaseRequest<Cell>("createCell", { cell_name: cellName }),
   updateCell: (user: User, cell: Cell) =>
     supabaseRequest<Cell>("updateCell", cell as unknown as Record<string, unknown>),
+  setAttendanceRecord: (user: User, memberId: string, weekStartDate: string, attendanceStatus: string) =>
+    supabaseRequest<{ member_id: string; week_start_date: string; attendance_status: string }>(
+      "setAttendanceRecord", { member_id: memberId, week_start_date: weekStartDate, attendance_status: attendanceStatus },
+    ),
   reassignMemberCell: (user: User, memberId: string, cellId: string) =>
     supabaseRequest<{ member_id: string; cell_id: string }>("reassignMemberCell", { member_id: memberId, cell_id: cellId }),
   getAttendanceSheet: (user: User, data: { cell_id?: string; from_date: string; to_date: string } & ScopeOptions) =>

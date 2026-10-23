@@ -151,6 +151,10 @@ export async function POST(request: Request) {
         }).eq("cell_id", requiredString(data.cell_id, "cell_id")).select("*").single();
         return databaseResult(result.data, result.error);
       }
+      case "setAttendanceRecord": {
+        requireAdmin(isAdmin);
+        return setAttendanceRecord(admin, user, data);
+      }
       case "reassignMemberCell": {
         requireAdmin(isAdmin);
         return reassignMemberCell(admin, user, data);
@@ -459,6 +463,34 @@ async function saveWeeklyReport(admin: any, user: AppUser, cellIds: string[] | n
     if (error) throw error;
   }
   return getReportDetail(admin, cellIds, reportResult.data.report_id, isAdminScope);
+}
+
+async function setAttendanceRecord(admin: any, user: AppUser, data: Record<string, unknown>) {
+  const memberId = requiredString(data.member_id, "member_id");
+  const weekStartDate = requiredString(data.week_start_date, "week_start_date");
+  const attendanceStatus = requiredString(data.attendance_status, "attendance_status");
+  const { data: member, error: memberError } = await admin.from("members").select("member_id,current_cell_id").eq("member_id", memberId).single();
+  if (memberError) throw memberError;
+  const cellId = member.current_cell_id;
+  const week = getWeekRange(weekStartDate);
+  const { data: existing } = await admin.from("weekly_cell_reports").select("report_id").eq("cell_id", cellId).eq("week_start_date", week.week_start_date).maybeSingle();
+  let reportId: string;
+  if (existing) {
+    reportId = existing.report_id;
+  } else {
+    const { data: newReport, error: reportError } = await admin.from("weekly_cell_reports").insert({
+      cell_id: cellId, week_start_date: week.week_start_date, week_end_date: week.week_end_date,
+      leader_user_id: user.user_id, status: "draft",
+    }).select("report_id").single();
+    if (reportError) throw reportError;
+    reportId = newReport.report_id;
+  }
+  const { error } = await admin.from("weekly_member_records").upsert({
+    report_id: reportId, member_id: memberId, cell_id: cellId, week_start_date: week.week_start_date,
+    attendance_status: attendanceStatus, created_by: user.user_id, updated_by: user.user_id,
+  }, { onConflict: "report_id,member_id" });
+  if (error) throw error;
+  return success({ member_id: memberId, week_start_date: week.week_start_date, attendance_status: attendanceStatus });
 }
 
 async function reassignMemberCell(admin: any, user: AppUser, data: Record<string, unknown>) {
