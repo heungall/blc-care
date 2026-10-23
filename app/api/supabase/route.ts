@@ -151,6 +151,12 @@ export async function POST(request: Request) {
         }).eq("cell_id", requiredString(data.cell_id, "cell_id")).select("*").single();
         return databaseResult(result.data, result.error);
       }
+      case "reassignMemberCell": {
+        requireAdmin(isAdmin);
+        return reassignMemberCell(admin, user, data);
+      }
+      case "getAttendanceSheet":
+        return getAttendanceSheet(admin, cellIds, data);
       case "getAbsenceAlerts": {
         let query = admin.from("absence_alerts").select("*").order("created_at", { ascending: false });
         if (!isAdmin) query = query.in("cell_id", cellIds!);
@@ -453,6 +459,56 @@ async function saveWeeklyReport(admin: any, user: AppUser, cellIds: string[] | n
     if (error) throw error;
   }
   return getReportDetail(admin, cellIds, reportResult.data.report_id, isAdminScope);
+}
+
+async function reassignMemberCell(admin: any, user: AppUser, data: Record<string, unknown>) {
+  const memberId = requiredString(data.member_id, "member_id");
+  const newCellId = requiredString(data.cell_id, "cell_id");
+  const { data: cell, error: cellError } = await admin.from("cells").select("cell_id").eq("cell_id", newCellId).eq("active", true).single();
+  if (cellError || !cell) throw new ActionError("BAD_REQUEST", "활성 셀을 선택해주세요.", 400);
+  const { data: member, error: memberError } = await admin.from("members").select("member_id,current_cell_id").eq("member_id", memberId).single();
+  if (memberError) throw memberError;
+  if (member.current_cell_id === newCellId) return success({ member_id: memberId, cell_id: newCellId });
+  const today = new Date().toISOString().slice(0, 10);
+  await admin.from("cell_member_history").update({ end_date: today }).eq("member_id", memberId).is("end_date", null);
+  await admin.from("cell_member_history").insert({
+    member_id: memberId, from_cell_id: member.current_cell_id, to_cell_id: newCellId,
+    start_date: today, reason: "cell reassignment", changed_by: user.user_id,
+  });
+  const { error: updateError } = await admin.from("members").update({ current_cell_id: newCellId, updated_by: user.user_id }).eq("member_id", memberId);
+  if (updateError) throw updateError;
+  return success({ member_id: memberId, cell_id: newCellId });
+}
+
+async function getAttendanceSheet(admin: any, cellIds: string[] | null, data: Record<string, unknown>) {
+  const fromDate = requiredString(data.from_date, "from_date");
+  const toDate = requiredString(data.to_date, "to_date");
+  const sheetCellId = typeof data.cell_id === "string" && data.cell_id ? data.cell_id : null;
+  if (sheetCellId) assertCellAccess(cellIds, sheetCellId);
+  let membersQuery = admin.from("members")
+    .select("member_id,display_name,current_cell_id,cells:current_cell_id(cell_name)")
+    .eq("status", "active").order("display_name");
+  if (sheetCellId) membersQuery = membersQuery.eq("current_cell_id", sheetCellId);
+  else if (cellIds) membersQuery = membersQuery.in("current_cell_id", cellIds);
+  let recordsQuery = admin.from("weekly_member_records")
+    .select("member_id,week_start_date,attendance_status")
+    .gte("week_start_date", fromDate).lte("week_start_date", toDate);
+  if (sheetCellId) recordsQuery = recordsQuery.eq("cell_id", sheetCellId);
+  else if (cellIds) recordsQuery = recordsQuery.in("cell_id", cellIds);
+  const [membersResult, recordsResult] = await Promise.all([membersQuery, recordsQuery]);
+  if (membersResult.error) throw membersResult.error;
+  if (recordsResult.error) throw recordsResult.error;
+  const attendanceMap = new Map<string, Record<string, string>>();
+  for (const record of recordsResult.data ?? []) {
+    if (!attendanceMap.has(record.member_id)) attendanceMap.set(record.member_id, {});
+    attendanceMap.get(record.member_id)![record.week_start_date] = record.attendance_status;
+  }
+  return success({
+    members: (membersResult.data ?? []).map((m: any) => ({
+      member_id: m.member_id, display_name: m.display_name, cell_name: m.cells?.cell_name ?? "",
+      attendance: attendanceMap.get(m.member_id) ?? {},
+    })),
+  });
 }
 
 async function convertNewcomer(admin: any, user: AppUser, data: Record<string, unknown>) {

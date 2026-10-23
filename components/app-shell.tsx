@@ -11,6 +11,7 @@ const baseItems = [
   { href: "/dashboard", label: "대시보드" },
   { href: "/members", label: "성도 목록" },
   { href: "/reports", label: "리포트" },
+  { href: "/attendance", label: "출석부" },
 ];
 
 const adminItems = [
@@ -119,7 +120,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      <nav aria-label="주요 메뉴" className={`fixed inset-x-0 bottom-0 z-30 grid border-t border-slate-200 bg-white px-2 py-2 lg:hidden ${isAdmin ? "grid-cols-4" : "grid-cols-3"}`}>
+      <nav aria-label="주요 메뉴" className={`fixed inset-x-0 bottom-0 z-30 grid border-t border-slate-200 bg-white px-2 py-2 lg:hidden ${isAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
         {[...baseItems, ...(isAdmin ? [adminItems[0]] : [])].map((item) => (
           <Link
             key={item.href}

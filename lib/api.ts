@@ -102,6 +102,15 @@ export type UpdateMemberPayload = Pick<Member,
   status?: Member["status"];
 };
 
+export type AttendanceSheetData = {
+  members: Array<{
+    member_id: string;
+    display_name: string;
+    cell_name: string;
+    attendance: Record<string, string>;
+  }>;
+};
+
 export type ReportDetail = {
   report: ReportListItem;
   records: Array<WeeklyMemberRecord & { member_display_name: string }>;
@@ -251,6 +260,10 @@ export const api = {
     supabaseRequest<Cell>("createCell", { cell_name: cellName }),
   updateCell: (user: User, cell: Cell) =>
     supabaseRequest<Cell>("updateCell", cell as unknown as Record<string, unknown>),
+  reassignMemberCell: (user: User, memberId: string, cellId: string) =>
+    supabaseRequest<{ member_id: string; cell_id: string }>("reassignMemberCell", { member_id: memberId, cell_id: cellId }),
+  getAttendanceSheet: (user: User, data: { cell_id?: string; from_date: string; to_date: string } & ScopeOptions) =>
+    supabaseRequest<AttendanceSheetData>("getAttendanceSheet", data as Record<string, unknown>),
   getAbsenceAlerts: async (user: User) => {
     void user;
     return (await supabaseRequest<{ items: AbsenceAlert[] }>("getAbsenceAlerts")).items;
