@@ -5,9 +5,9 @@ import { useAuth } from "@/components/auth-provider";
 import { PageHeader } from "@/components/page-header";
 import { ReportListSkeleton } from "@/components/skeletons";
 import { ReportStatusBadge } from "@/components/status-badge";
-import { Card, EmptyState, ErrorState, LinkButton, Select } from "@/components/ui";
+import { EmptyState, ErrorState, LinkButton, Select } from "@/components/ui";
 import { useApiData } from "@/hooks/use-api-data";
-import { api } from "@/lib/api";
+import { api, type ReportListItem } from "@/lib/api";
 
 export default function ReportsPage() {
   const { user, leaderMode } = useAuth();
@@ -23,6 +23,13 @@ export default function ReportsPage() {
   const loading = cellsState.loading || state.loading;
   const error = cellsState.error || state.error;
 
+  const weekGroups = new Map<string, ReportListItem[]>();
+  for (const report of reports) {
+    const key = `${report.week_start_date} ~ ${report.week_end_date}`;
+    if (!weekGroups.has(key)) weekGroups.set(key, []);
+    weekGroups.get(key)!.push(report);
+  }
+
   return (
     <>
       <PageHeader title="주차별 리포트" description={leaderMode ? "셀리더 모드에서는 배정된 셀 리포트만 표시합니다." : "작성한 셀 리포트를 주차별로 확인하세요."} action={<LinkButton href="/reports/new">새 리포트 작성</LinkButton>} />
@@ -34,7 +41,50 @@ export default function ReportsPage() {
       </div>
       {loading && <ReportListSkeleton />}
       {error && <ErrorState onRetry={() => { void cellsState.reload(); void state.reload(); }}>{error}</ErrorState>}
-      {!loading && !error && (reports.length ? <div className="space-y-4">{reports.map((report) => <Card key={report.report_id} variant="list" padding="compact" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex flex-wrap items-center gap-2"><h2 className="font-bold">{report.cell_name}</h2><ReportStatusBadge status={report.status} /></div><p className="mt-2 text-sm text-slate-500">{report.week_start_date} ~ {report.week_end_date} · 작성자 {report.leader_name}</p><p className="mt-1 text-xs text-slate-400">수정 {report.updated_at}</p></div><LinkButton href={`/reports/${report.report_id}`} variant="secondary">상세 보기</LinkButton></Card>)}</div> : <EmptyState>표시할 리포트가 없습니다.</EmptyState>)}
+      {!loading && !error && (
+        reports.length ? (
+          <div className="space-y-6">
+            {[...weekGroups.entries()].map(([weekLabel, weekReports]) => (
+              <section key={weekLabel}>
+                <div className="mb-3 flex items-center gap-3">
+                  <h2 className="text-sm font-bold text-slate-700">{weekLabel}</h2>
+                  <span className="text-xs text-slate-400">{weekReports.length}개 셀</span>
+                  <div className="flex-1 border-t border-slate-200" />
+                </div>
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
+                  {weekReports.map((report) => (
+                    <div key={report.report_id} className="flex items-center gap-3 px-4 py-3 transition hover:bg-slate-50">
+                      <div className={`size-2 rounded-full ${statusDot(report.status)}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold">{report.cell_name}</span>
+                          <ReportStatusBadge status={report.status} />
+                        </div>
+                        <p className="mt-0.5 text-xs text-slate-400">작성자 {report.leader_name} · {report.record_count}명 기록 · 수정 {fmtDate(report.updated_at)}</p>
+                      </div>
+                      <LinkButton href={`/reports/${report.report_id}`} variant="secondary">상세</LinkButton>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : <EmptyState>표시할 리포트가 없습니다.</EmptyState>
+      )}
     </>
   );
+}
+
+function statusDot(status: string): string {
+  switch (status) {
+    case "submitted": return "bg-green-400";
+    case "locked": return "bg-blue-400";
+    case "draft": return "bg-amber-400";
+    default: return "bg-slate-300";
+  }
+}
+
+function fmtDate(value: string): string {
+  if (!value) return "";
+  return value.slice(0, 10);
 }

@@ -127,8 +127,47 @@ export default function MemberDetailPage() {
           </Card>
 
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card variant="sensitive" padding="compact"><h2 className="text-lg font-bold">최근 돌봄 기록</h2><div className="mt-4 space-y-3">{history.records.length ? history.records.map((record) => <div key={record.record_id} className="rounded-xl bg-white/80 p-3"><AttendanceStatusBadge status={record.attendance_status} /><p className="mt-3 text-sm text-slate-600">{record.sharing_summary}</p><p className="mt-2 text-sm text-slate-500">{record.prayer_request}</p></div>) : <p className="text-sm text-slate-500">아직 기록이 없습니다.</p>}</div></Card>
-            <Card variant="sensitive" padding="compact"><h2 className="text-lg font-bold">특이사항</h2><div className="mt-4 space-y-3">{history.notes.length ? history.notes.map((note) => <div key={note.note_id} className="rounded-xl bg-white/80 p-3"><div className="flex justify-between gap-3"><Badge tone={note.resolved ? "success" : "warning"}>{note.resolved ? "해결" : "확인 필요"}</Badge><span className="text-xs text-slate-400">{note.recorded_date}</span></div><p className="mt-3 text-sm text-slate-600">{note.note}</p></div>) : <p className="text-sm text-slate-500">표시할 특이사항이 없습니다.</p>}</div></Card>
+            <Card variant="sensitive" padding="compact">
+              <h2 className="text-base font-bold">최근 돌봄 기록</h2>
+              <div className="mt-4 divide-y divide-slate-100">
+                {history.records.length ? history.records.slice(0, 12).map((record) => {
+                  const hasContent = record.sharing_summary || record.prayer_request || record.absence_reason;
+                  return (
+                    <div key={record.record_id} className="py-3 first:pt-0 last:pb-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <AttendanceStatusBadge status={record.attendance_status} />
+                          <span className="text-xs font-semibold text-slate-500">{record.week_start_date} 주차</span>
+                        </div>
+                        {record.report_date && <span className="text-[11px] text-slate-400">모임일 {record.report_date}</span>}
+                      </div>
+                      {hasContent && (
+                        <div className="mt-2 space-y-1 pl-1">
+                          {record.sharing_summary && <p className="text-sm text-slate-600"><span className="mr-1 text-xs font-semibold text-slate-400">나눔</span>{record.sharing_summary}</p>}
+                          {record.prayer_request && <p className="text-sm text-slate-600"><span className="mr-1 text-xs font-semibold text-slate-400">기도</span>{record.prayer_request}</p>}
+                          {record.absence_reason && <p className="text-sm text-slate-600"><span className="mr-1 text-xs font-semibold text-slate-400">사유</span>{record.absence_reason}</p>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }) : <p className="py-4 text-sm text-slate-400">아직 기록이 없습니다.</p>}
+              </div>
+            </Card>
+            <Card variant="sensitive" padding="compact">
+              <h2 className="text-base font-bold">특이사항</h2>
+              <div className="mt-4 divide-y divide-slate-100">
+                {history.notes.length ? history.notes.map((note) => (
+                  <div key={note.note_id} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge tone={note.resolved ? "success" : "warning"}>{note.resolved ? "해결" : "확인 필요"}</Badge>
+                      <span className="text-xs text-slate-400">{note.recorded_date}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-600">{note.note}</p>
+                    {note.resolved && note.resolved_date && <p className="mt-1 text-xs text-slate-400">해결일 {note.resolved_date}</p>}
+                  </div>
+                )) : <p className="py-4 text-sm text-slate-400">표시할 특이사항이 없습니다.</p>}
+              </div>
+            </Card>
           </div>
         </div>
       )}
