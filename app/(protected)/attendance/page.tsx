@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { PageHeader } from "@/components/page-header";
 import { Button, EmptyState, ErrorState, LoadingState, Select } from "@/components/ui";
@@ -33,6 +33,15 @@ export default function AttendancePage() {
   const toDate = lastDayOf(endMonth);
   const weeks = weeksInRange(fromDate, toDate);
 
+  const monthGroups: Array<{ label: string; count: number }> = [];
+  for (const w of weeks) {
+    const d = parseDateString(w);
+    const label = `${d.getUTCMonth() + 1}월`;
+    const last = monthGroups[monthGroups.length - 1];
+    if (last?.label === label) last.count++;
+    else monthGroups.push({ label, count: 1 });
+  }
+
   const cellsState = useApiData(() => api.getCells(user, { scope }), [user.email, leaderMode]);
   const sheetState = useApiData(() => api.getAttendanceSheet(user, {
     scope,
@@ -46,8 +55,16 @@ export default function AttendancePage() {
     const c = a.cell_name.localeCompare(b.cell_name, "ko");
     return c !== 0 ? c : a.display_name.localeCompare(b.display_name, "ko");
   });
+  const grouped = new Map<string, typeof members>();
+  for (const m of members) {
+    const key = m.cell_name || "미지정";
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(m);
+  }
+
   const loading = cellsState.loading || sheetState.loading;
   const loadError = cellsState.error || sheetState.error;
+  const totalCols = 1 + weeks.length + 1;
 
   const applyPaint = useCallback((memberId: string, week: string) => {
     if (!paintStatusRef.current) return;
@@ -169,60 +186,85 @@ export default function AttendancePage() {
       {!loading && !loadError && (
         members.length ? (
           <div className={`overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm ${paintStatus ? "select-none" : ""}`}>
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold tracking-wide text-slate-500">
-                <tr>
-                  <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 whitespace-nowrap">셀</th>
-                  <th className="px-3 py-3 whitespace-nowrap">이름</th>
-                  {weeks.map((w) => <th key={w} className="px-2 py-3 text-center whitespace-nowrap">{weekLabel(w)}</th>)}
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th rowSpan={2} className="sticky left-0 z-10 bg-slate-50 px-4 py-2 text-left text-xs font-semibold text-slate-500 whitespace-nowrap">이름</th>
+                  {monthGroups.map((mg) => (
+                    <th key={mg.label} colSpan={mg.count} className="border-l border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-slate-700">
+                      {mg.label}
+                    </th>
+                  ))}
+                  <th rowSpan={2} className="border-l border-slate-200 px-3 py-2 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">출석률</th>
+                </tr>
+                <tr className="border-b border-slate-300 bg-slate-50">
+                  {weeks.map((w) => (
+                    <th key={w} className="px-1.5 py-1.5 text-center text-[11px] font-medium text-slate-400 whitespace-nowrap">{weekLabel(w)}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {members.map((m) => (
-                  <tr key={m.member_id} className="hover:bg-slate-50">
-                    <td className="sticky left-0 z-10 bg-white px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">{m.cell_name}</td>
-                    <td className="px-3 py-2.5 font-semibold whitespace-nowrap">{m.display_name}</td>
-                    {weeks.map((w) => {
-                      const s = m.attendance[w] as AttendanceStatus | undefined;
-                      const isEditing = !paintStatus && editingCell?.memberId === m.member_id && editingCell?.week === w;
+              <tbody>
+                {[...grouped.entries()].map(([cellName, cellMembers]) => (
+                  <Fragment key={cellName}>
+                    <tr>
+                      <td colSpan={totalCols} className="border-l-4 border-l-blue-400 bg-blue-50/60 px-4 py-2 text-xs font-bold text-slate-700">
+                        {cellName} <span className="ml-1 font-normal text-slate-400">{cellMembers.length}명</span>
+                      </td>
+                    </tr>
+                    {cellMembers.map((m, idx) => {
+                      const rate = calcRate(m, weeks);
                       return (
-                        <td key={w} className="relative px-2 py-2.5 text-center">
-                          {isAdmin ? (
-                            <button
-                              type="button"
-                              className={`focus-ring inline-flex size-7 items-center justify-center rounded-full text-xs font-bold transition hover:ring-2 hover:ring-blue-300 disabled:opacity-50 ${paintStatus ? "cursor-crosshair" : ""}`}
-                              disabled={saving}
-                              onMouseDown={(e) => { e.preventDefault(); handleCellMouseDown(m.member_id, w); }}
-                              onMouseEnter={() => handleCellMouseEnter(m.member_id, w)}
-                              title={s ? getAttendanceStatusLabel(s) : "기록 없음"}
-                            >
-                              {s ? (
-                                <span className={`inline-flex size-7 items-center justify-center rounded-full ${statusStyle(s)}`}>
-                                  {getAttendanceStatusMarker(s)}
-                                </span>
-                              ) : (
-                                <span className="text-slate-300">–</span>
-                              )}
-                            </button>
-                          ) : (
-                            s ? (
-                              <span className={`inline-flex size-7 items-center justify-center rounded-full text-xs font-bold ${statusStyle(s)}`} title={getAttendanceStatusLabel(s)}>
-                                {getAttendanceStatusMarker(s)}
-                              </span>
-                            ) : (
-                              <span className="text-slate-300">–</span>
-                            )
-                          )}
-                          {isEditing && (
-                            <StatusPicker
-                              onSelect={(status) => void handleSingleSet(m.member_id, w, status)}
-                              onClose={() => setEditingCell(null)}
-                            />
-                          )}
-                        </td>
+                        <tr key={m.member_id} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"}>
+                          <td className="sticky left-0 z-10 px-4 py-1.5 text-[13px] font-semibold whitespace-nowrap" style={{ backgroundColor: idx % 2 === 0 ? "#fff" : "#f8fafc66" }}>
+                            {m.display_name}
+                          </td>
+                          {weeks.map((w) => {
+                            const s = m.attendance[w] as AttendanceStatus | undefined;
+                            const isEditing = !paintStatus && editingCell?.memberId === m.member_id && editingCell?.week === w;
+                            return (
+                              <td key={w} className="relative px-1 py-1.5 text-center">
+                                {isAdmin ? (
+                                  <button
+                                    type="button"
+                                    className={`focus-ring inline-flex size-6 items-center justify-center rounded-full text-[11px] font-bold transition hover:ring-2 hover:ring-blue-300 disabled:opacity-50 ${paintStatus ? "cursor-crosshair" : ""}`}
+                                    disabled={saving}
+                                    onMouseDown={(e) => { e.preventDefault(); handleCellMouseDown(m.member_id, w); }}
+                                    onMouseEnter={() => handleCellMouseEnter(m.member_id, w)}
+                                    title={s ? getAttendanceStatusLabel(s) : "기록 없음"}
+                                  >
+                                    {s ? (
+                                      <span className={`inline-flex size-6 items-center justify-center rounded-full ${statusStyle(s)}`}>
+                                        {getAttendanceStatusMarker(s)}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-200">–</span>
+                                    )}
+                                  </button>
+                                ) : (
+                                  s ? (
+                                    <span className={`inline-flex size-6 items-center justify-center rounded-full text-[11px] font-bold ${statusStyle(s)}`} title={getAttendanceStatusLabel(s)}>
+                                      {getAttendanceStatusMarker(s)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-200">–</span>
+                                  )
+                                )}
+                                {isEditing && (
+                                  <StatusPicker
+                                    onSelect={(status) => void handleSingleSet(m.member_id, w, status)}
+                                    onClose={() => setEditingCell(null)}
+                                  />
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className={`border-l border-slate-100 px-3 py-1.5 text-center text-xs ${rateStyle(rate)}`}>
+                            {rate !== null ? `${rate}%` : "–"}
+                          </td>
+                        </tr>
                       );
                     })}
-                  </tr>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -230,12 +272,12 @@ export default function AttendancePage() {
         ) : <EmptyState>표시할 출석 데이터가 없습니다.</EmptyState>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
         <Legend marker="✓" label="출석" className="bg-green-100 text-green-700" />
         <Legend marker="×" label="결석" className="bg-rose-100 text-rose-700" />
-        <Legend marker="!" label="사유 결석" className="bg-amber-100 text-amber-800" />
+        <Legend marker="!" label="사유" className="bg-amber-100 text-amber-800" />
         <Legend marker="?" label="미확인" className="bg-slate-100 text-slate-600" />
-        <span><span className="inline-flex size-5 items-center justify-center text-slate-300">–</span> 기록 없음</span>
+        <span>– 기록 없음</span>
       </div>
     </>
   );
@@ -265,10 +307,23 @@ function StatusPicker({ onSelect, onClose }: { onSelect: (s: AttendanceStatus) =
 function Legend({ marker, label, className }: { marker: string; label: string; className: string }) {
   return (
     <span className="flex items-center gap-1">
-      <span className={`inline-flex size-5 items-center justify-center rounded-full text-[10px] font-bold ${className}`}>{marker}</span>
+      <span className={`inline-flex size-4 items-center justify-center rounded-full text-[9px] font-bold ${className}`}>{marker}</span>
       {label}
     </span>
   );
+}
+
+function calcRate(m: { attendance: Record<string, string> }, weeks: string[]): number | null {
+  const recorded = weeks.filter((w) => m.attendance[w]);
+  if (!recorded.length) return null;
+  return Math.round(recorded.filter((w) => m.attendance[w] === "present").length / recorded.length * 100);
+}
+
+function rateStyle(rate: number | null): string {
+  if (rate === null) return "text-slate-300";
+  if (rate >= 80) return "font-bold text-green-600";
+  if (rate >= 50) return "font-bold text-amber-600";
+  return "font-bold text-rose-600";
 }
 
 function statusStyle(s: AttendanceStatus): string {
