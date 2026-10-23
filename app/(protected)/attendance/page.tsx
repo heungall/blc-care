@@ -87,16 +87,16 @@ export default function AttendancePage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold tracking-wide text-slate-500">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 whitespace-nowrap">이름</th>
-                  {cellId === "all" && <th className="px-3 py-3 whitespace-nowrap">셀</th>}
+                  <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 whitespace-nowrap">셀</th>
+                  <th className="px-3 py-3 whitespace-nowrap">이름</th>
                   {weeks.map((w) => <th key={w} className="px-2 py-3 text-center whitespace-nowrap">{weekLabel(w)}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {members.map((m) => (
                   <tr key={m.member_id} className="hover:bg-slate-50">
-                    <td className="sticky left-0 z-10 bg-white px-4 py-2.5 font-semibold whitespace-nowrap">{m.display_name}</td>
-                    {cellId === "all" && <td className="px-3 py-2.5 text-xs text-slate-500 whitespace-nowrap">{m.cell_name}</td>}
+                    <td className="sticky left-0 z-10 bg-white px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">{m.cell_name}</td>
+                    <td className="px-3 py-2.5 font-semibold whitespace-nowrap">{m.display_name}</td>
                     {weeks.map((w) => {
                       const s = m.attendance[w] as AttendanceStatus | undefined;
                       const isEditing = editingCell?.memberId === m.member_id && editingCell?.week === w;
