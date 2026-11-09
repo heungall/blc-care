@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/c/work/blc-care/app/\\\\(protected\\\\)/admin/dashboard/page.tsx\"}",
+  "error": "File does not exist. Note: your current working directory is C:\\work\\blc-care.",
+  "timestamp": "2026-10-23T04:07:52.335Z",
+  "retry_count": 1
+}
