@@ -58,6 +58,15 @@ BLC Care 전체 앱을 다 만들어줘.
 
 ---
 
+## 2.3 Supabase Keep Alive 환경변수
+
+`.github/workflows/supabase-keepalive.yml`은 `.env.example`과 동일한 이름의 GitHub Actions
+Secrets `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY`를 사용한다.
+각 Secret에는 해당 Supabase 환경변수 값을 등록한다. 로컬 `.env.local`은 Actions에 자동으로
+전달되지 않으며, 실제 값은 워크플로 파일에 직접 작성하지 않는다.
+
+---
+
 # 3. 전체 개발 단계
 
 ```txt

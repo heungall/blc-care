@@ -1888,3 +1888,34 @@ BLC Care 개발 이력을 기록하는 문서입니다.
 * 없음
 
 ---
+
+## 2026-11-09 - Supabase Keep Alive 환경변수 이름 통일
+
+### Summary
+
+* 워크플로의 환경변수, GitHub Secrets 참조, curl 변수명을 `.env.example`의 `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY`에 맞췄다.
+* GitHub Secrets 설정 방법과 로컬 env 파일이 Actions에 자동 전달되지 않는 점을 개발 계획에 기록했다.
+
+### Changed Files
+
+* `.github/workflows/supabase-keepalive.yml`
+* `docs/08_DEVELOPMENT_PLAN.md`
+* `HISTORY.md`
+
+### Reason
+
+* 프로젝트 환경변수 이름과 워크플로 설정의 불일치를 해소하기 위함. `.env.local`에는 레거시 변수만 있어 사용자 확인에 따라 `.env.example`을 기준으로 삼았다.
+
+### Checks
+
+* 워크플로 환경변수, Secrets 참조, curl 변수명과 `.env.example`의 일치 검사 통과.
+* `git diff --check` 통과.
+* `npm.cmd run lint`, `npm.cmd run typecheck` 통과.
+* `npm.cmd run dev -- --hostname 127.0.0.1 --port 3100` 시작 확인. `/login`은 `.env.local`에 Supabase URL과 publishable key가 없어 HTTP 500 발생.
+
+### TODO
+
+* GitHub Actions Secrets에 `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` 값을 등록하거나 기존 등록 여부를 확인하고 워크플로를 실행한다. 원격 설정과 실제 Supabase 호출은 이번 작업에서 검증하지 않았다.
+* 로컬 화면 확인에는 `.env.local`의 Supabase 환경변수 설정이 필요하다.
+
+---

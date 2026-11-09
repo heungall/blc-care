@@ -13,11 +13,11 @@ jobs:
     steps:
     - name: Query Supabase Database
       env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       run: |
         curl --fail --show-error --silent \
           --retry 3 \
           --max-time 30 \
-          "${SUPABASE_URL}/rest/v1/keepalive?select=id&limit=1" \
-          -H "apikey: ${SUPABASE_KEY}"
+          "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/keepalive?select=id&limit=1" \
+          -H "apikey: ${SUPABASE_SECRET_KEY}"
