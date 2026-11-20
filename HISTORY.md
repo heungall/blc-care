@@ -1,5 +1,57 @@
 # HISTORY.md
 
+## 2026-11-20 - 계좌별 헌금 합계 기초 작업
+
+### Summary
+- 일반 헌금과 공간헌금 계좌 용도 및 계좌 수 제한 없는 관리 요구사항을 기록하고 성도·연도별 계좌 합계 함수를 추가했다.
+### Changed Files
+- `lib/offering-summary.ts`, `lib/offering-summary.test.ts`, `docs/01_REQUIREMENTS.md`, `HISTORY.md`
+### Reason
+- 계좌가 늘어나도 계좌별 금액과 전체 합계를 구분하기 위해서다.
+### Checks
+- 계좌 합계 단위 테스트를 실행한다.
+### Remaining TODOs
+- 계좌 관리 화면과 영구 저장, 확인된 헌금 연결, 권한 검증 및 계좌별 조회 화면을 구현해야 한다.
+
+## 2026-11-20 - 교회 계좌 수 확인
+
+### Summary
+- 현재 교회 계좌 두 개와 계좌별 거래 구분, 성도별 연간 합산 요구사항을 기록했다.
+### Changed Files
+- `docs/01_REQUIREMENTS.md`, `HISTORY.md`
+### Reason
+- 거래를 올바른 계좌에 연결하고 계좌 간 헌금 내역을 합산하기 위해서다.
+### Checks
+- 문서 변경으로 별도 실행 검사는 생략했다.
+### Remaining TODOs
+- 계좌 선택과 거래 저장, 계좌별 중복 확인 및 연간 합산을 구현하고 검증한다.
+
+## 2026-11-20 - 거래 용도와 명목 요구사항 추가
+
+### Summary
+- 확인이 필요한 거래에 관리자가 종류와 용도·명목을 입력하고 확인된 헌금만 성도별 합계에 포함하도록 요구사항을 기록했다.
+### Changed Files
+- `docs/01_REQUIREMENTS.md`, `HISTORY.md`
+### Reason
+- 은행 입금 내역만으로 헌금인지 판단할 수 없는 경우를 처리한다.
+### Checks
+- 문서 변경으로 별도 실행 검사는 생략했다.
+### Remaining TODOs
+- 거래 분류·용도 입력 화면, 저장, 관리자 권한 및 연간 합계 구현과 검증이 필요하다.
+
+## 2026-11-20 - 헌금 정리 기초 작업
+
+### Summary
+- 여러 교회 계좌, 관리자 전용 접근과 확인 후 저장 요구사항을 기록하고 거래 텍스트 분리 함수를 추가했다.
+### Changed Files
+- `lib/bank-statement-parser.ts`, `lib/bank-statement-parser.test.ts`, `docs/01_REQUIREMENTS.md`, `docs/07_PRIVACY_POLICY.md`, `HISTORY.md`
+### Reason
+- 줄바꿈된 거래 내역을 분리하고 민감한 금융 정보의 처리 범위를 명확히 한다.
+### Checks
+- 거래 분리 단위 테스트 및 정적 검사를 실행한다.
+### Remaining TODOs
+- 계좌 관리, 중복 확인, 사용자 확인 화면, 서버 권한 및 RLS, 저장과 월별·연간 조회를 구현하고 검증한다.
+
 BLC Care 개발 이력을 기록하는 문서입니다.
 
 이 문서는 세션이 바뀌어도 프로젝트 맥락을 유지하기 위해 사용합니다.
