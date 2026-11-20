@@ -16,14 +16,16 @@ export type BankStatementParseResult = {
 export function parseBankStatement(text: string): BankStatementParseResult {
   const rows: BankStatementRow[] = [];
   const invalidRows: BankStatementParseResult["invalidRows"] = [];
-  // Only a date followed by a time starts a row; descriptions can wrap across lines.
-  const starts = [...text.matchAll(/(?:^|\s)(\d{8})\s+(\d{2}:\d{2}:\d{2})(?=\s|$)/g)];
+  // Detect date-shaped row starts even when their time is missing, so a bad row is not silently skipped.
+  const starts = [...text.matchAll(/(?:^|\s)(\d{8})(?=\s|$)/g)];
   starts.forEach((match, index) => {
     const rowNumber = index + 1;
     const date = match[1];
-    const time = match[2];
-    const body = text.slice(match.index! + match[0].length, starts[index + 1]?.index ?? text.length)
+    const content = text.slice(match.index! + match[0].length, starts[index + 1]?.index ?? text.length)
       .replace(/\s+/g, " ").trim();
+    const timeMatch = content.match(/^(\d{2}:\d{2}:\d{2})(?:\s+|$)/);
+    const time = timeMatch?.[1] ?? "";
+    const body = timeMatch ? content.slice(timeMatch[0].length) : "";
     const amounts = body.match(/^(.*?)\s+(\d{1,3}(?:,\d{3})+|\d+)\s+(\d{1,3}(?:,\d{3})+|\d+)\s+(.+)$/);
     const year = Number(date.slice(0, 4));
     const month = Number(date.slice(4, 6));
@@ -31,7 +33,7 @@ export function parseBankStatement(text: string): BankStatementParseResult {
     const calendarDate = new Date(Date.UTC(year, month - 1, day));
     const validDate = calendarDate.getUTCFullYear() === year && calendarDate.getUTCMonth() === month - 1 && calendarDate.getUTCDate() === day;
     const [hour, minute, second] = time.split(":").map(Number);
-    if (!amounts || !validDate || hour > 23 || minute > 59 || second > 59) {
+    if (!timeMatch || !amounts || !validDate || hour > 23 || minute > 59 || second > 59) {
       invalidRows.push({ rowNumber, reason: "날짜, 시간 또는 금액을 확인해 주세요." });
       return;
     }
@@ -42,7 +44,12 @@ export function parseBankStatement(text: string): BankStatementParseResult {
       return;
     }
     // Balance and branch are not needed for classification or storage.
-    const details = amounts[4].split(/\s+\*{3,}/)[0].trim();
+    const balanceMarker = amounts[4].search(/\s+\*{3,}/);
+    if (balanceMarker < 0) {
+      invalidRows.push({ rowNumber, reason: "잔액 마스킹을 찾을 수 없습니다. 거래 형식을 확인해 주세요." });
+      return;
+    }
+    const details = amounts[4].slice(0, balanceMarker).trim();
     if (!details) {
       invalidRows.push({ rowNumber, reason: "거래 내용을 확인해 주세요." });
       return;

@@ -20,4 +20,17 @@ describe("bank statement parser", () => {
     expect(result.rows).toEqual([]);
     expect(result.invalidRows.map((row) => row.rowNumber)).toEqual([1, 2]);
   });
+
+  it("flags a row with a missing time rather than silently merging it into the previous row", () => {
+    const result = parseBankStatement(`20260101 12:00:00 이체 0 100 홍길동 ********** 샘플점
+20260102 이체 0 200 샘플 ********** 샘플점`);
+    expect(result.rows).toHaveLength(1);
+    expect(result.invalidRows.map((row) => row.rowNumber)).toEqual([2]);
+  });
+
+  it("does not retain an unmasked balance", () => {
+    const result = parseBankStatement("20260101 12:00:00 이체 0 100 샘플 1,000 샘플점");
+    expect(result.rows).toHaveLength(0);
+    expect(result.invalidRows).toHaveLength(1);
+  });
 });

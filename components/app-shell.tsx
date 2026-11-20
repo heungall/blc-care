@@ -16,6 +16,7 @@ const baseItems = [
 
 const adminItems = [
   { href: "/admin/dashboard", label: "Admin 현황" },
+  { href: "/admin/offerings", label: "헌금 정리" },
   { href: "/admin/newcomers", label: "새신자 관리" },
   { href: "/admin/absence", label: "장기결석자" },
   { href: "/admin/cells", label: "셀 관리" },

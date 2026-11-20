@@ -1,5 +1,18 @@
 # HISTORY.md
 
+## 2026-11-20 - 관리자 헌금 정리 화면
+
+### Summary
+- 계좌 관리, 마스킹된 거래표 분리와 확인 후 저장, 분류 수정, 월별 거래와 성도별 연간 계좌 합계를 구현했다.
+### Changed Files
+- `app/(protected)/admin/offerings/page.tsx`, `components/app-shell.tsx`, `lib/offering-api.ts`, `lib/bank-statement-parser.ts`, 관련 단위·RLS 테스트, Supabase migration, 관련 docs와 `HISTORY.md`
+### Reason
+- 관리자가 여러 계좌의 헌금과 기타 입출금을 구분하고 확인해 관리할 수 있도록 한다.
+### Checks
+- 타입 검사와 lint, 거래 분리와 계좌 합계 테스트 6건 통과. 개발 서버 시작은 확인했으나 Supabase URL/공개 키가 없어 화면 요청은 500으로 실패했다. Docker 미설치로 DB RLS 테스트는 실행하지 못함.
+### Remaining TODOs
+- 운영 DB migration 적용 전 RLS와 백업을 검증한다. 동일 거래로 판별되는 실제 거래가 여러 건인 경우의 처리 방안과 보관 기간 정책이 필요하다.
+
 ## 2026-11-20 - 계좌별 헌금 합계 기초 작업
 
 ### Summary
