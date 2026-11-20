@@ -4,6 +4,8 @@
 
 헌금 계좌와 거래는 활성 Admin만 조회·생성·수정할 수 있다. 페이지 접근 제어 외에 각 Supabase 테이블에 Admin 전용 RLS를 적용한다. 셀리더는 배정 셀 성도의 헌금에도 접근할 수 없다. 운영 DB에서 RLS 검증 후 사용한다.
 
+헌금 등록 이력 조회와 등록 건 삭제도 활성 Admin 전용이다. 저장 및 삭제 RPC는 내부에서 Admin 권한을 다시 확인하고 거래와 이력을 원자적으로 처리한다.
+
 > 현재 로그인 신원은 Supabase Auth Google OAuth의 `auth.users.id`로 확인하고
 > `public.users.auth_user_id`에 연결한다. 이메일은 최초 연결 대상 확인에만 사용하며,
 > 이후 보호 API의 권한은 서버 세션, roles, 활성 셀 배정으로 다시 검증한다.

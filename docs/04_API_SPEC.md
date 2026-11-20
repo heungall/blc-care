@@ -4,6 +4,8 @@
 
 관리자 화면은 사용자 세션의 Supabase 브라우저 클라이언트로 `offering_accounts`, `offering_transactions`와 성도 이름을 조회한다. 테이블 RLS가 활성 관리자 여부를 재검증하며 일반 사용자와 비로그인 사용자는 접근할 수 없다. 거래 일괄 insert는 하나의 DB 요청이며 제약 조건을 하나라도 위반하면 전체가 실패한다. 수정은 거래 분류, 연결 성도, 용도만 허용한다.
 
+`save_offering_import` RPC는 Admin을 재검증하고 계좌의 거래 최대 500건과 등록 메타데이터를 하나의 트랜잭션으로 저장한다. `delete_offering_import` RPC는 Admin을 재검증하고 한 등록 건의 거래만 삭제한 뒤 삭제자·시각을 기록한다. 브라우저는 거래를 직접 insert 또는 delete 할 수 없다. 실패 시 작업 전체가 롤백된다.
+
 ## 현재 Supabase 런타임
 
 2026-06-14부터 브라우저 API client는 동일 출처의 `POST /api/supabase`를 호출한다.

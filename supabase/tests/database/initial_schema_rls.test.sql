@@ -10,8 +10,8 @@ select has_table('public', 'weekly_cell_reports', 'weekly_cell_reports table exi
 select has_table('public', 'newcomers', 'newcomers table exists');
 
 select ok(
-  (select count(*) = 14 from pg_tables where schemaname = 'public' and rowsecurity),
-  'all 14 application tables have RLS enabled'
+  (select count(*) = 15 from pg_tables where schemaname = 'public' and rowsecurity),
+  'all 15 application tables have RLS enabled'
 );
 
 insert into auth.users (id, email)

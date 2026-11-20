@@ -1,5 +1,18 @@
 # HISTORY.md
 
+## 2026-11-20 - 헌금 등록 이력과 등록 건 삭제
+
+### Summary
+- 거래 저장마다 계좌, 시각, 작업자와 건수를 기록하고, 확인 후 등록 건 전체를 삭제하도록 구현했다.
+### Changed Files
+- `app/(protected)/admin/offerings/page.tsx`, `lib/offering-api.ts`, `supabase/migrations/202611200002_offering_import_batches.sql`, DB 테스트, 관련 docs와 `HISTORY.md`
+### Reason
+- 잘못된 계좌에 입력한 거래를 구분해 삭제하고 등록·삭제 이력을 남기기 위해서다.
+### Checks
+- 타입 검사, lint 및 거래 분리·합계 테스트 6건 통과. 로컬 PostgreSQL/Docker가 없어 신규 DB 권한·삭제 테스트는 실행하지 못했다.
+### Remaining TODOs
+- 후속 migration 적용과 관리자·셀리더·비로그인 권한 및 저장·삭제 검증이 필요하다. 기존 거래는 한 건씩 별도 이력으로 표시된다.
+
 ## 2026-11-20 - 관리자 헌금 정리 화면
 
 ### Summary
